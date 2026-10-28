@@ -41,12 +41,18 @@ export const mediaFallback: Record<string, string> = {
   "7.mp4": "/__l5e/assets-v1/53898e5d-3916-4597-a4c4-d0612caba351/7.mp4",
   "8.mp4": "/__l5e/assets-v1/5be23893-ab10-4f54-b747-eac4a2045175/8.mp4",
   "9.mp4": "/__l5e/assets-v1/cdf1e103-dc4c-4b8c-9301-ccdac97301b3/9.mp4",
-  "Acrylic_Cutout_Decor.png": "/__l5e/assets-v1/e95aa535-d153-495f-99b3-4e17b566aed6/Acrylic_Cutout_Decor.png",
-  "Acrylic_Desk_Photos.png": "/__l5e/assets-v1/09a800d0-1621-4c72-84a8-6f74cd3509b2/Acrylic_Desk_Photos.png",
-  "Acrylic_Monogram.png": "/__l5e/assets-v1/c35a6620-d433-45a8-9a52-a64bc7dafe6c/Acrylic_Monogram.png",
-  "Advertisement_card_2.png": "/__l5e/assets-v1/22af6821-21fe-419f-bc28-e3e83a539ce0/Advertisement_card_2.png",
-  "Advertisement_card_3.png": "/__l5e/assets-v1/f253cd65-6a70-4119-870e-e606ceffd6d4/Advertisement_card_3.png",
-  "Advertisment_Card.png": "/__l5e/assets-v1/c84d038a-ace5-4e9c-bf6c-eb5f396961f7/Advertisment_Card.png",
+  "Acrylic_Cutout_Decor.png":
+    "/__l5e/assets-v1/e95aa535-d153-495f-99b3-4e17b566aed6/Acrylic_Cutout_Decor.png",
+  "Acrylic_Desk_Photos.png":
+    "/__l5e/assets-v1/09a800d0-1621-4c72-84a8-6f74cd3509b2/Acrylic_Desk_Photos.png",
+  "Acrylic_Monogram.png":
+    "/__l5e/assets-v1/c35a6620-d433-45a8-9a52-a64bc7dafe6c/Acrylic_Monogram.png",
+  "Advertisement_card_2.png":
+    "/__l5e/assets-v1/22af6821-21fe-419f-bc28-e3e83a539ce0/Advertisement_card_2.png",
+  "Advertisement_card_3.png":
+    "/__l5e/assets-v1/f253cd65-6a70-4119-870e-e606ceffd6d4/Advertisement_card_3.png",
+  "Advertisment_Card.png":
+    "/__l5e/assets-v1/c84d038a-ace5-4e9c-bf6c-eb5f396961f7/Advertisment_Card.png",
   "banner-1.png": "/__l5e/assets-v1/e304b8d8-692f-4f8a-9458-992974ef62a6/banner-1.png",
   "banner-2.png": "/__l5e/assets-v1/5229e5cd-bfb2-4655-9d02-5d62b57590d0/banner-2.png",
   "banner-3.png": "/__l5e/assets-v1/29072ed0-9c89-4588-954a-41b1732dd9ac/banner-3.png",
@@ -57,15 +63,22 @@ export const mediaFallback: Record<string, string> = {
   "Category_Bg1.png": "/__l5e/assets-v1/562d2f46-f707-4478-a0d4-7a613dc55423/Category_Bg1.png",
   "Category_Bg2.png": "/__l5e/assets-v1/2e61d73c-1241-4b9a-b08a-282f71741a4d/Category_Bg2.png",
   "Category_Bg2b.png": "/__l5e/assets-v1/68692d62-234f-4330-9931-fdb39faa27dc/Category_Bg2b.png",
-  "Corporate_gifting.png": "/__l5e/assets-v1/5830d944-4565-4d26-adfc-cccde9811a72/Corporate_gifting.png",
-  "Cup_Waterbottle.png": "/__l5e/assets-v1/5e2a7dba-2c92-4c91-924e-96ba51cdba72/Cup_Waterbottle.png",
-  "Custom_acrylic_phots.png": "/__l5e/assets-v1/9ce7b135-a352-455e-a485-4046602fef7e/Custom_acrylic_phots.png",
-  "Custom_Keychains.png": "/__l5e/assets-v1/b7a82af5-d347-40b2-be32-e5b57671dd65/Custom_Keychains.png",
-  "Custom_name_plates.png": "/__l5e/assets-v1/b8a86209-e6b4-41b6-bf36-a648987c5258/Custom_name_plates.png",
+  "Corporate_gifting.png":
+    "/__l5e/assets-v1/5830d944-4565-4d26-adfc-cccde9811a72/Corporate_gifting.png",
+  "Cup_Waterbottle.png":
+    "/__l5e/assets-v1/5e2a7dba-2c92-4c91-924e-96ba51cdba72/Cup_Waterbottle.png",
+  "Custom_acrylic_phots.png":
+    "/__l5e/assets-v1/9ce7b135-a352-455e-a485-4046602fef7e/Custom_acrylic_phots.png",
+  "Custom_Keychains.png":
+    "/__l5e/assets-v1/b7a82af5-d347-40b2-be32-e5b57671dd65/Custom_Keychains.png",
+  "Custom_name_plates.png":
+    "/__l5e/assets-v1/b8a86209-e6b4-41b6-bf36-a648987c5258/Custom_name_plates.png",
   "Custom_Pillows.png": "/__l5e/assets-v1/d572a7eb-29b2-42a8-bef0-8a3130cfa12a/Custom_Pillows.png",
-  "Framed_Acrylic_Photos.png": "/__l5e/assets-v1/4308e8a4-50d7-4c7a-9d90-082011919737/Framed_Acrylic_Photos.png",
+  "Framed_Acrylic_Photos.png":
+    "/__l5e/assets-v1/4308e8a4-50d7-4c7a-9d90-082011919737/Framed_Acrylic_Photos.png",
   "Fridge_magnets.png": "/__l5e/assets-v1/1899e451-3dfe-4c39-b766-0cfb74391011/Fridge_magnets.png",
-  "GildaDisplay-Regular.ttf": "/__l5e/assets-v1/b31e979c-30c9-4548-a5f7-02a6a0cc3140/GildaDisplay-Regular.ttf",
+  "GildaDisplay-Regular.ttf":
+    "/__l5e/assets-v1/b31e979c-30c9-4548-a5f7-02a6a0cc3140/GildaDisplay-Regular.ttf",
   "Gilroy-Regular.ttf": "/__l5e/assets-v1/adababcf-1092-4761-a583-bb1a11208ea6/Gilroy-Regular.ttf",
   "Hoodies.png": "/__l5e/assets-v1/ab6c0349-cee4-492f-a0bc-64f0ea46d1f8/Hoodies.png",
   "Jute_Bag.png": "/__l5e/assets-v1/88c38289-eb24-41a2-97c0-26f5abef2a4c/Jute_Bag.png",
@@ -73,13 +86,16 @@ export const mediaFallback: Record<string, string> = {
   "LOGO_1.png": "/__l5e/assets-v1/091dca16-2ea3-4ec6-93e3-573aa87ce670/LOGO_1.png",
   "LOGO.png": "/__l5e/assets-v1/6192d917-37f1-4b85-848e-65e80e35dded/LOGO.png",
   "Luggage_tags.png": "/__l5e/assets-v1/c6fd8c38-c53c-4f1f-ac11-130374638a5b/Luggage_tags.png",
-  "Lunch_Container.png": "/__l5e/assets-v1/920c8f63-01a5-43bf-a52f-33ea39caf548/Lunch_Container.png",
+  "Lunch_Container.png":
+    "/__l5e/assets-v1/920c8f63-01a5-43bf-a52f-33ea39caf548/Lunch_Container.png",
   "Pen_Drives.png": "/__l5e/assets-v1/21b6722c-95f8-4a91-810f-c54274e5fee7/Pen_Drives.png",
   "Perfume.png": "/__l5e/assets-v1/de2cc7e9-5f42-43a9-8b3c-1948b994f880/Perfume.png",
   "Photo_Albums.png": "/__l5e/assets-v1/3f948716-3636-432e-b7d7-781b734db3a3/Photo_Albums.png",
   "Potted_Plant.png": "/__l5e/assets-v1/e3cccc14-f31a-4f70-8349-8532e8409a32/Potted_Plant.png",
-  "Premiuim_Gifting.png": "/__l5e/assets-v1/c5f5934e-8e01-47cc-bf97-57706a571f95/Premiuim_Gifting.png",
-  "Premium_Acrylic_Photos.png": "/__l5e/assets-v1/7ea2a6bf-2605-4d65-a2b0-74dc711c075b/Premium_Acrylic_Photos.png",
+  "Premiuim_Gifting.png":
+    "/__l5e/assets-v1/c5f5934e-8e01-47cc-bf97-57706a571f95/Premiuim_Gifting.png",
+  "Premium_Acrylic_Photos.png":
+    "/__l5e/assets-v1/7ea2a6bf-2605-4d65-a2b0-74dc711c075b/Premium_Acrylic_Photos.png",
   "Premium_Candle.png": "/__l5e/assets-v1/5631dc5a-29bd-4a80-8d56-e6d695ec8519/Premium_Candle.png",
   "Return_Gifts.png": "/__l5e/assets-v1/f67598bf-2604-4285-a028-368de7734bb9/Return_Gifts.png",
   "Sweet_Box.png": "/__l5e/assets-v1/9e8a91cb-6333-4f06-add5-9304d78538cf/Sweet_Box.png",
@@ -90,7 +106,6 @@ export const mediaFallback: Record<string, string> = {
   "Wall_Clocks.png": "/__l5e/assets-v1/7814def3-2984-416b-8541-379f07c1c285/Wall_Clocks.png",
 };
 
-/** Public URL for a media file, from Supabase Storage when configured. */
 export function assetUrl(filename: string): string {
   if (base) return `${base}/${filename}`;
   return mediaFallback[filename] ?? "";

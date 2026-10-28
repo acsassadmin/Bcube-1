@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Currency, Contact } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/hooks/use-cart";
 import { MagneticButton, Magnetic } from "@/components/motion/MagneticButton";
@@ -8,6 +8,8 @@ import { formatPrice } from "@/data/pricing";
 import { useProducts } from "@/lib/store";
 import { placeOrder, type CheckoutDetails } from "@/lib/orders";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
@@ -27,7 +29,32 @@ export const Route = createFileRoute("/cart")({
   component: CartPage,
 });
 
-const emptyDetails: CheckoutDetails = { customer_name: "", email: "", phone: "", address: "", notes: "" };
+const emptyDetails: CheckoutDetails = {
+  customer_name: "",
+  email: "",
+  phone: "",
+  address: "",
+  notes: "",
+};
+
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window !== "undefined" && "Razorpay" in window) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    // script.src = "https://razorpay.com";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => {
+      console.error("SDK script file failed to download.");
+      resolve(false);
+    };
+    document.head.appendChild(script);
+  });
+};
 
 function CartPage() {
   const { items, count, subtotal, removeItem, setQty, clear } = useCart();
@@ -37,8 +64,9 @@ function CartPage() {
   const [details, setDetails] = useState<CheckoutDetails>(emptyDetails);
   const [placing, setPlacing] = useState(false);
 
-  const setField = (k: keyof CheckoutDetails) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setDetails((d) => ({ ...d, [k]: e.target.value }));
+  const setField =
+    (k: keyof CheckoutDetails) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setDetails((d) => ({ ...d, [k]: e.target.value }));
 
   async function handleCheckout() {
     if (!user) {
@@ -51,19 +79,107 @@ function CartPage() {
       return;
     }
     setPlacing(true);
+
+    const isScriptLoaded = await loadRazorpayScript();
+    if (!isScriptLoaded) {
+      toast.error("Failed to load payment gatway. Check yourt internet connection.");
+      setPlacing(false);
+      return;
+    }
+
     const result = await placeOrder({
       details: { ...details, email: details.email || (user.email ?? "") },
       items,
       subtotal,
     });
-    setPlacing(false);
-    if (!result.ok) {
+
+    if (!result.ok || !result.orderId || !result.amount) {
       toast.error("We could not place your order. Please try again.");
+      setPlacing(false);
       return;
     }
-    toast.success("Order placed — our team will confirm your details shortly.");
-    setDetails(emptyDetails);
-    clear();
+
+    try {
+      const { data: rzpOrder, error: rzpInvokeError } =
+        await supabase.functions.invoke("razorpay", {
+          body: { action: "create_order", amount: result.amount * 100 },
+        });
+
+      if (rzpInvokeError || !rzpOrder?.id) {
+        throw new Error(
+          rzpInvokeError?.message ||
+            rzpOrder?.error ||
+            "Payment setup failed.",
+        );
+      }
+
+      // Save Razorpay order ID to our order record
+      await supabase
+        .from("orders")
+        .update({ razorpay_order_id: rzpOrder.id })
+        .eq("id", result.orderId);
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: rzpOrder.amount,
+        currency: rzpOrder.currency,
+        name: "BCUBE",
+        decription: `Order Reference: ${result.orderId}`,
+        order_id: rzpOrder.id,
+        handler: async function (response: any) {
+          setPlacing(true);
+          try {
+            const { data: verifyData, error: verifyInvokeError } =
+              await supabase.functions.invoke("razorpay", {
+                body: {
+                  action: "verify",
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                },
+              });
+
+            if (verifyInvokeError) {
+              console.error(verifyInvokeError);
+            }
+
+            if (verifyData?.success) {
+              toast.success("Order placed — our team will confirm your details shortly.");
+              setDetails(emptyDetails);
+              clear();
+            } else {
+              toast.error("Payment authentication failed.Please contact help desk.");
+            }
+          } catch (err) {
+            console.error(err);
+            toast.error("Error confirming payment status.");
+          } finally {
+            setPlacing(false);
+          }
+        },
+        prefill: {
+          name: details.customer_name,
+          email: details.email || user.email || "",
+          contact: details.phone,
+        },
+        theme: {
+          color: "#4F46E5",
+        },
+        modal: {
+          ondismiss: function () {
+            toast.warning("Payment cancelled. You can try paying for your order again.");
+            setPlacing(false);
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error("Razorpay generation lifcycle crashed:", error);
+      toast.error("Could not launch payment gateway. Please check back later");
+      setPlacing(false);
+    }
   }
 
   return (
@@ -71,14 +187,18 @@ function CartPage() {
       <div className="container mx-auto px-4">
         <h1 className="font-display text-3xl md:text-4xl text-brand-ink">Your cart</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {count > 0 ? `${count} item${count > 1 ? "s" : ""} ready to be crafted` : "Nothing here yet"}
+          {count > 0
+            ? `${count} item${count > 1 ? "s" : ""} ready to be crafted`
+            : "Nothing here yet"}
         </p>
 
         {items.length === 0 ? (
           <div className="mt-8 grid place-items-center rounded-[25px] border border-border bg-white p-12 text-center">
             <ShoppingBag className="h-10 w-10 text-brand-red/60" />
             <p className="mt-4 font-display text-xl text-brand-ink">Your cart is empty</p>
-            <p className="mt-1 text-sm text-muted-foreground">Personalise a piece and it will show up here.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Personalise a piece and it will show up here.
+            </p>
             <Magnetic className="mt-6">
               <Link
                 to="/product"
@@ -122,7 +242,8 @@ function CartPage() {
                             {item.name}
                           </Link>
                           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                            {[shape, size, thickness].filter(Boolean).join(" · ") || "Custom enquiry"}
+                            {[shape, size, thickness].filter(Boolean).join(" · ") ||
+                              "Custom enquiry"}
                           </p>
                         </div>
                         <button
@@ -143,7 +264,9 @@ function CartPage() {
                           >
                             <Minus className="h-3.5 w-3.5" />
                           </button>
-                          <span className="w-8 text-center text-sm font-semibold text-brand-ink">{item.qty}</span>
+                          <span className="w-8 text-center text-sm font-semibold text-brand-ink">
+                            {item.qty}
+                          </span>
                           <button
                             onClick={() => setQty(item.id, item.qty + 1)}
                             aria-label="Increase quantity"
@@ -152,7 +275,9 @@ function CartPage() {
                             <Plus className="h-3.5 w-3.5" />
                           </button>
                         </div>
-                        <p className="font-display text-lg text-brand-red">{formatPrice(price * item.qty)}</p>
+                        <p className="font-display text-lg text-brand-red">
+                          {formatPrice(price * item.qty)}
+                        </p>
                       </div>
                     </div>
                   </li>
@@ -172,14 +297,29 @@ function CartPage() {
                   <dd className="text-brand-ink">Calculated at confirmation</dd>
                 </div>
               </dl>
+
               <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
                 <span className="text-sm text-muted-foreground">Total</span>
-                <span className="font-display text-2xl text-brand-red">{formatPrice(subtotal)}</span>
+                <span className="font-display text-2xl text-brand-red">
+                  {formatPrice(subtotal)}
+                </span>
               </div>
               <div className="mt-5 space-y-2">
-                <CheckoutField placeholder="Full name" value={details.customer_name} onChange={setField("customer_name")} />
-                <CheckoutField placeholder="Phone" value={details.phone} onChange={setField("phone")} />
-                <CheckoutField placeholder="Email (optional)" value={details.email} onChange={setField("email")} />
+                <CheckoutField
+                  placeholder="Full name"
+                  value={details.customer_name}
+                  onChange={setField("customer_name")}
+                />
+                <CheckoutField
+                  placeholder="Phone"
+                  value={details.phone}
+                  onChange={setField("phone")}
+                />
+                <CheckoutField
+                  placeholder="Email (optional)"
+                  value={details.email}
+                  onChange={setField("email")}
+                />
                 <textarea
                   placeholder="Delivery address"
                   rows={3}
@@ -187,14 +327,19 @@ function CartPage() {
                   onChange={setField("address")}
                   className="w-full rounded-2xl border border-border px-4 py-2 text-sm text-brand-ink outline-none focus:border-brand-red"
                 />
-                <CheckoutField placeholder="Notes for our team (optional)" value={details.notes} onChange={setField("notes")} />
+                <CheckoutField
+                  placeholder="Notes for our team (optional)"
+                  value={details.notes}
+                  onChange={setField("notes")}
+                />
               </div>
               <MagneticButton
                 disabled={placing}
                 onClick={() => void handleCheckout()}
                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-brand-red px-7 py-3 text-sm font-semibold text-white hover:brightness-95"
               >
-                {placing ? "Placing order…" : user ? "Place order" : "Sign in to check out"} <ArrowRight className="h-4 w-4" />
+                {placing ? "Placing order…" : user ? "Place order" : "Sign in to check out"}{" "}
+                <ArrowRight className="h-4 w-4" />
               </MagneticButton>
               <MagneticButton
                 onClick={clear}

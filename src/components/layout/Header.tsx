@@ -1,7 +1,16 @@
 import { assetUrl } from "@/data/media-map";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ShoppingCart, LogIn, Home, Package, Info, Phone, LogOut, Shield } from "lucide-react";
+import {
+  ShoppingCart,
+  LogIn,
+  Home,
+  Package,
+  Info,
+  Phone,
+  LogOut,
+  Shield,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -60,8 +69,15 @@ export function Header() {
     <>
       <header className="sticky top-2 z-40 mx-2 rounded-[25px] border border-white/40 bg-white/30 backdrop-blur-2xl backdrop-saturate-150 md:mx-4">
         <div className="container mx-auto flex items-center gap-4 px-4 py-1.5 md:gap-6">
-          <Link to="/" className="flex items-center shrink-0 transition-transform duration-300 hover:scale-105">
-            <img src={media("logo", logo.url)} alt="B Cube logo" className="h-11 w-11 md:h-14 md:w-14 object-contain" />
+          <Link
+            to="/"
+            className="flex items-center shrink-0 transition-transform duration-300 hover:scale-105"
+          >
+            <img
+              src={media("logo", logo.url)}
+              alt="B Cube logo"
+              className="h-11 w-11 md:h-14 md:w-14 object-contain"
+            />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1 rounded-full bg-brand-yellow px-2 py-1.5 shadow-sm">
@@ -70,7 +86,10 @@ export function Header() {
                 key={item.to}
                 to={item.to}
                 className="rounded-full px-3 py-1.5 text-sm font-medium text-brand-ink transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/40"
-                activeProps={{ className: "rounded-full px-3 py-1.5 text-sm font-semibold text-brand-red bg-white/70" }}
+                activeProps={{
+                  className:
+                    "rounded-full px-3 py-1.5 text-sm font-semibold text-brand-red bg-white/70",
+                }}
                 activeOptions={{ exact: item.to === "/" }}
               >
                 {item.label}
@@ -119,7 +138,6 @@ export function Header() {
               </Link>
             )}
           </div>
-
         </div>
       </header>
 
@@ -130,7 +148,10 @@ export function Header() {
             key={to}
             to={to}
             className="flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl px-2 py-1 text-[11px] font-medium text-brand-ink transition-transform duration-200 active:scale-90"
-            activeProps={{ className: "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl bg-white/70 px-2 py-1 text-[11px] font-semibold text-brand-red" }}
+            activeProps={{
+              className:
+                "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl bg-white/70 px-2 py-1 text-[11px] font-semibold text-brand-red",
+            }}
             activeOptions={{ exact: to === "/" }}
           >
             <Icon className="h-5 w-5 shrink-0" />
@@ -142,7 +163,10 @@ export function Header() {
           to="/cart"
           data-cart-target
           className="relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl px-2 py-1 text-[11px] font-medium text-brand-ink transition-transform duration-200 active:scale-90"
-          activeProps={{ className: "relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl bg-white/70 px-2 py-1 text-[11px] font-semibold text-brand-red" }}
+          activeProps={{
+            className:
+              "relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl bg-white/70 px-2 py-1 text-[11px] font-semibold text-brand-red",
+          }}
         >
           <ShoppingCart className={`h-5 w-5 shrink-0 ${arrived ? "cart-shake" : ""}`} />
           <span className="truncate">Cart</span>

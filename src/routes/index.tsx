@@ -35,15 +35,20 @@ const gCorporate = { url: assetUrl("Corporate_gifting.png") };
 const gAcrylic = { url: assetUrl("Custom_acrylic_phots.png") };
 const gReturn = { url: assetUrl("Return_Gifts.png") };
 
-
-
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "B Cube — More Than Décor. It's Personal." },
-      { name: "description", content: "Personalised acrylic photos, framed pieces, clocks and gifts crafted for the moments that matter." },
+      {
+        name: "description",
+        content:
+          "Personalised acrylic photos, framed pieces, clocks and gifts crafted for the moments that matter.",
+      },
       { property: "og:title", content: "B Cube — More Than Décor. It's Personal." },
-      { property: "og:description", content: "Personalised acrylic photos, framed pieces, clocks and gifts." },
+      {
+        property: "og:description",
+        content: "Personalised acrylic photos, framed pieces, clocks and gifts.",
+      },
     ],
   }),
   component: HomePage,
@@ -107,13 +112,15 @@ function Hero() {
                 decoding="async"
               />
               <div className="absolute inset-x-0 top-0 flex flex-col items-center gap-5 px-6 pt-14 text-center md:pt-24">
-                <h1 className={`max-w-2xl md:max-w-3xl lg:max-w-none lg:whitespace-nowrap font-display text-2xl italic leading-tight sm:text-3xl md:text-4xl lg:text-5xl ${s.light ? "text-white" : "text-brand-ink"}`}>
+                <h1
+                  className={`max-w-2xl md:max-w-3xl lg:max-w-none lg:whitespace-nowrap font-display text-2xl italic leading-tight sm:text-3xl md:text-4xl lg:text-5xl ${s.light ? "text-white" : "text-brand-ink"}`}
+                >
                   {s.tagline}
                 </h1>
                 <Magnetic>
                   <Link
                     to="/product"
-                    search={{ tab: 'custom' }}
+                    search={{ tab: "custom" }}
                     className="inline-flex items-center gap-2 rounded-full bg-brand-red px-7 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-brand-red-dark"
                   >
                     Explore <ArrowRight className="h-4 w-4" />
@@ -123,8 +130,6 @@ function Hero() {
             </div>
           ))}
         </div>
-
-
 
         <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2">
           {slides.map((s, k) => (
@@ -141,35 +146,57 @@ function Hero() {
   );
 }
 
-
 function Spotlight() {
   const { media } = useMedia();
-  const bgIdle = media("category-bg", catBg1.url);
-  const bgHover = media("category-bg-hover", catBg2.url);
+  const bgIdle = catBg1.url;
+  const bgHover = catBg2.url;
   const items = [
-    { label: "Custom Acrylic Pictures", img: media("category-1", cat1.url), tab: "custom" as const },
-    { label: "Corporate Gifting", img: media("category-2", cat2.url), tab: "corporate" as const },
-    { label: "Return Gifts", img: media("category-3", cat3.url), tab: "return" as const },
+    { label: "Custom Acrylic Pictures", img: cat1.url, tab: "custom" as const },
+    { label: "Corporate Gifting", img: cat2.url, tab: "corporate" as const },
+    { label: "Return Gifts", img: cat3.url, tab: "return" as const },
   ];
   return (
     <section className="container mx-auto px-4 py-14">
-      <Reveal as="h2" className="text-center font-display text-3xl md:text-4xl text-brand-ink">Product categories</Reveal>
+      <Reveal as="h2" className="text-center font-display text-3xl md:text-4xl text-brand-ink">
+        Product categories
+      </Reveal>
       <div className="mt-8 md:mt-12 grid gap-6 md:gap-10 grid-cols-3 place-items-center">
         {items.map((it, idx) => (
           <Reveal key={it.label} delay={idx * 90}>
-          <Link
-            key={it.label}
-            to="/product"
-            search={{ tab: it.tab }}
-            className="group flex min-w-0 flex-col items-center"
-          >
-            <div className="relative h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52 lg:h-72 lg:w-72">
-              <img src={bgIdle} alt="" aria-hidden loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-contain transition-opacity duration-200 group-hover:opacity-0" />
-              <img src={bgHover} alt="" aria-hidden loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-contain opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
-              <img src={it.img} alt={it.label} loading="lazy" className="absolute inset-0 m-auto h-20 w-20 sm:h-28 sm:w-28 md:h-40 md:w-40 lg:h-56 lg:w-56 object-contain drop-shadow-md" />
-            </div>
-            <p className="mt-3 md:mt-4 text-center text-xs sm:text-sm md:text-base lg:text-lg font-medium text-brand-ink">{it.label}</p>
-          </Link>
+            <Link
+              key={it.label}
+              to="/product"
+              search={{ tab: it.tab }}
+              className="group flex min-w-0 flex-col items-center"
+            >
+              <div className="relative h-28 w-28 sm:h-40 sm:w-40 md:h-52 md:w-52 lg:h-72 lg:w-72">
+                <img
+                  src={bgIdle}
+                  alt=""
+                  aria-hidden
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-contain transition-opacity duration-200 group-hover:opacity-0"
+                />
+                <img
+                  src={bgHover}
+                  alt=""
+                  aria-hidden
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-contain opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                />
+                <img
+                  src={it.img}
+                  alt={it.label}
+                  loading="lazy"
+                  className="absolute inset-0 m-auto h-20 w-20 sm:h-28 sm:w-28 md:h-40 md:w-40 lg:h-56 lg:w-56 object-contain drop-shadow-md"
+                />
+              </div>
+              <p className="mt-3 md:mt-4 text-center text-xs sm:text-sm md:text-base lg:text-lg font-medium text-brand-ink">
+                {it.label}
+              </p>
+            </Link>
           </Reveal>
         ))}
       </div>
@@ -177,15 +204,19 @@ function Spotlight() {
   );
 }
 
-
-
-
 function EnquireBand() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
   return (
     <section className="bg-brand-yellow my-12">
       <div className="container mx-auto grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6 px-4 py-10 items-center">
-        <Reveal as="h2" className="font-display text-5xl text-brand-red leading-none rotate-[-2deg]">Enquire<br/>Now</Reveal>
+        <Reveal
+          as="h2"
+          className="font-display text-5xl text-brand-red leading-none rotate-[-2deg]"
+        >
+          Enquire
+          <br />
+          Now
+        </Reveal>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -196,15 +227,42 @@ function EnquireBand() {
           }}
           className="grid gap-3 sm:grid-cols-2"
         >
-          <input required placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="rounded-md bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red" />
-          <input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="rounded-md bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red" />
-          <input required placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="rounded-md bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red" />
-          <textarea placeholder="Message" rows={1} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="rounded-md bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red sm:row-span-2 sm:col-start-2 sm:row-start-1 sm:h-full" />
+          <input
+            required
+            placeholder="Name"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className="rounded-md bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red"
+          />
+          <input
+            required
+            type="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            className="rounded-md bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red"
+          />
+          <input
+            required
+            placeholder="Phone"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            className="rounded-md bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red"
+          />
+          <textarea
+            placeholder="Message"
+            rows={1}
+            value={form.message}
+            onChange={(e) => setForm({ ...form, message: e.target.value })}
+            className="rounded-md bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red sm:row-span-2 sm:col-start-2 sm:row-start-1 sm:h-full"
+          />
           <div className="flex items-center justify-between sm:col-span-2">
             <label className="inline-flex items-center gap-2 text-xs text-brand-ink">
               <input type="checkbox" defaultChecked /> I agree to be contacted
             </label>
-            <MagneticButton className="rounded-md bg-brand-red px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-red-dark">Send</MagneticButton>
+            <MagneticButton className="rounded-md bg-brand-red px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-red-dark">
+              Send
+            </MagneticButton>
           </div>
         </form>
       </div>
@@ -232,7 +290,9 @@ function FeaturedGrid() {
   ].map((p) => ({ ...p, img: image(p.slug) || fallback[p.slug]! }));
   return (
     <section className="container mx-auto px-4 py-12">
-      <Reveal as="h2" className="text-center font-display text-3xl md:text-4xl text-brand-ink">Acrylic photos, framed pieces, clocks &amp; sets</Reveal>
+      <Reveal as="h2" className="text-center font-display text-3xl md:text-4xl text-brand-ink">
+        Acrylic photos, framed pieces, clocks &amp; sets
+      </Reveal>
       <div className="mt-8 md:mt-10 grid grid-cols-2 md:grid-cols-3 gap-x-3 sm:gap-x-6 gap-y-8 md:gap-y-12">
         {featured.map((p, idx) => (
           <Reveal key={p.slug} delay={idx * 80}>
@@ -243,7 +303,6 @@ function FeaturedGrid() {
     </section>
   );
 }
-
 
 function RelationshipBanner() {
   const { media } = useMedia();
@@ -266,7 +325,12 @@ function ContactStrip() {
   return (
     <section className="my-12">
       <Link to="/contact" className="block">
-        <img src={media("ad-2", ad2.url)} alt="To know more about our products — call +91 93632 96919 or email bcube@gmail.com" className="w-full" loading="lazy" />
+        <img
+          src={media("ad-2", ad2.url)}
+          alt="To know more about our products — call +91 93632 96919 or email bcube@gmail.com"
+          className="w-full"
+          loading="lazy"
+        />
       </Link>
     </section>
   );
@@ -283,7 +347,16 @@ function MakeSpecial() {
   return (
     <section className="container mx-auto px-4 py-12">
       <div className="grid lg:grid-cols-[1fr_1.4fr] gap-10 items-center">
-        <Reveal as="h2" className="font-display text-4xl md:text-5xl leading-tight text-brand-ink text-center lg:text-left lg:ml-24">Make<br/>Celebrations<br/>Special With</Reveal>
+        <Reveal
+          as="h2"
+          className="font-display text-4xl md:text-5xl leading-tight text-brand-ink text-center lg:text-left lg:ml-24"
+        >
+          Make
+          <br />
+          Celebrations
+          <br />
+          Special With
+        </Reveal>
         <div className="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-10 items-end">
           {cats.map((c, idx) => (
             <Reveal key={c.name} delay={idx * 80}>
@@ -311,6 +384,3 @@ function PerfectGifts() {
     </section>
   );
 }
-
-
-
