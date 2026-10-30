@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ImageIcon } from "lucide-react";
 import { useTestimonialGroups } from "@/lib/store";
+import { Link } from "@tanstack/react-router";
 
 /**
  * Loads/plays a clip only once it is close to the viewport, so the page never
@@ -75,9 +76,13 @@ export function Testimonials({
               <div className="min-w-0">
                 <h3 className="font-display text-xl text-brand-ink">{group.title}</h3>
                 <p className="mt-2 text-sm text-brand-ink/80">{group.body}</p>
-                <button className="mt-4 inline-flex items-center gap-1 rounded-full border border-brand-red px-4 py-1.5 text-xs font-semibold text-brand-red hover:bg-white/50">
-                  Explore <ArrowRight className="h-3 w-3" />
-                </button>
+                <Link
+                  to="/product"
+                  search={{ tab: "custom" }}
+                  className="inline-flex items-center gap-2 rounded-full bg-brand-red px-7 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-brand-red-dark"
+                >
+                  Explore <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             </div>
           </article>
