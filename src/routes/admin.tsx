@@ -15,6 +15,8 @@ import {
   Info,
   Plus,
   Trash2,
+  Eye,
+  Download,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ImageUpload from "@/components/ImageUpload";
@@ -22,6 +24,14 @@ import VideoUpload from "@/components/VideoUpload";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPrice } from "@/data/pricing";
 import { staticAbout, type AboutContent } from "@/lib/store";
+import { signProductPhoto } from "@/lib/uploads";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -1044,16 +1054,383 @@ function AboutTab() {
 
 /* ----------------------------------------------------------------- orders */
 
+type OrderConfig = Record<string, unknown>;
+
+type AdminOrderItem = {
+  name: string;
+  qty: number;
+  unit_price: number;
+  slug: string;
+  config?: OrderConfig | null;
+};
+
+type AdminOrder = {
+  id: string;
+  customer_name: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  notes: string | null;
+  subtotal: number;
+  status: string;
+  created_at: string;
+  order_items: AdminOrderItem[];
+};
+
+const CONFIG_LABELS: Record<string, string> = {
+  mode: "Order type",
+  shape: "Shape",
+  frame: "Frame",
+  frameColor: "Frame colour",
+  orientation: "Orientation",
+  size: "Size",
+  thickness: "Thickness",
+  addText: "Custom text",
+  text: "Text",
+  textColor: "Text colour",
+  textSize: "Text size",
+  imgScale: "Image zoom",
+  imgX: "Image position X",
+  imgY: "Image position Y",
+  quantity: "Quantity",
+  pincode: "Pincode",
+  idea: "Customer's idea",
+  message: "Customer message",
+};
+
+const CONFIG_PRIMARY_KEYS = [
+  "mode",
+  "shape",
+  "frame",
+  "frameColor",
+  "orientation",
+  "size",
+  "thickness",
+  "addText",
+  "text",
+  "textColor",
+  "textSize",
+  "imgScale",
+  "imgX",
+  "imgY",
+];
+
+const BUYER_INFO_KEYS = ["quantity", "pincode", "idea", "message"];
+const HIDDEN_CONFIG_KEYS = new Set(["step", "imageUrl", "imagePath", "price", "buyerInfo"]);
+const HIDDEN_BUYER_KEYS = new Set(["name", "email", "phone", "address", "mode"]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function shortOrderId(id: string) {
+  return id.slice(0, 8).toUpperCase();
+}
+
+function humanizeKey(key: string) {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/^./, (char) => char.toUpperCase());
+}
+
+function formatConfigValue(key: string, value: unknown): string | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number") return String(value);
+  if (typeof value === "string") {
+    if (key === "frame") return value === "with" ? "With frame" : "Without frame";
+    if (key === "mode") {
+      if (value === "wizard") return "Customised product";
+      if (value === "bulk") return "Bulk order";
+      if (value === "custom-enquiry") return "Custom enquiry";
+    }
+    return value;
+  }
+  if (Array.isArray(value)) return value.map(String).join(", ");
+  return JSON.stringify(value);
+}
+
+function buildConfigRows(config: OrderConfig) {
+  const rows: { key: string; label: string; value: string; color?: string }[] = [];
+  const seen = new Set<string>();
+
+  const push = (key: string, value: unknown) => {
+    if (seen.has(key)) return;
+    const text = formatConfigValue(key, value);
+    if (text === null) return;
+    seen.add(key);
+    const color =
+      /colou?r$/i.test(key) && typeof value === "string" && /^#[0-9a-f]{3,8}$/i.test(value)
+        ? value
+        : undefined;
+    rows.push({ key, label: CONFIG_LABELS[key] ?? humanizeKey(key), value: text, color });
+  };
+
+  for (const key of CONFIG_PRIMARY_KEYS) push(key, config[key]);
+
+  const buyerInfo = isRecord(config.buyerInfo) ? config.buyerInfo : {};
+  for (const key of BUYER_INFO_KEYS) push(key, buyerInfo[key]);
+
+  for (const [key, value] of Object.entries(config)) {
+    if (HIDDEN_CONFIG_KEYS.has(key)) continue;
+    push(key, value);
+  }
+  for (const [key, value] of Object.entries(buyerInfo)) {
+    if (HIDDEN_BUYER_KEYS.has(key)) continue;
+    push(key, value);
+  }
+
+  return rows;
+}
+
+function extensionFromType(type: string) {
+  if (type.includes("png")) return "png";
+  if (type.includes("webp")) return "webp";
+  return "jpg";
+}
+
+function safeFilename(value: string) {
+  return value.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase();
+}
+
+function OrderItemDetails({
+  item,
+  order,
+  index,
+}: {
+  item: AdminOrderItem;
+  order: AdminOrder;
+  index: number;
+}) {
+  const config = isRecord(item.config) ? item.config : {};
+  const savedPath = typeof config.imagePath === "string" ? config.imagePath : undefined;
+  const savedUrl = typeof config.imageUrl === "string" ? config.imageUrl : undefined;
+  const [imageUrl, setImageUrl] = useState<string | null>(savedUrl ?? null);
+  const [imageFailed, setImageFailed] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setImageFailed(false);
+    if (!savedPath) {
+      setImageUrl(savedUrl ?? null);
+      return () => {
+        active = false;
+      };
+    }
+    void signProductPhoto(savedPath).then((url) => {
+      if (active && url) setImageUrl(url);
+    });
+    return () => {
+      active = false;
+    };
+  }, [savedPath, savedUrl]);
+
+  async function downloadArtwork() {
+    if (!imageUrl || downloading) return;
+    setDownloading(true);
+    try {
+      const response = await fetch(imageUrl);
+      if (!response.ok) throw new Error(`Download failed (${response.status})`);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `${safeFilename(item.slug || "artwork")}-${shortOrderId(order.id)}-${index + 1}.${extensionFromType(blob.type)}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      toast.success("Artwork downloaded");
+    } catch (error) {
+      console.error("artwork download failed", error);
+      window.open(imageUrl, "_blank", "noopener,noreferrer");
+      toast.info("Artwork opened in a new tab — save it from there.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  const rows = buildConfigRows(config);
+  const lineTotal = item.unit_price * item.qty;
+
+  return (
+    <div className="rounded-2xl border border-border bg-white p-4">
+      <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="h-28 w-28 shrink-0 overflow-hidden rounded-xl border border-border bg-muted/30">
+          {imageUrl && !imageFailed ? (
+            <img
+              src={imageUrl}
+              alt={`${item.name} artwork`}
+              className="h-full w-full object-contain p-1"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+              <ImageOff className="h-5 w-5" />
+              <span className="text-[10px]">No artwork</span>
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p className="font-semibold text-brand-ink">{item.name}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Qty {item.qty} · {formatPrice(item.unit_price)} each
+              </p>
+            </div>
+            <p className="font-display text-lg text-brand-red">{formatPrice(lineTotal)}</p>
+          </div>
+
+          {imageUrl && (
+            <button
+              type="button"
+              onClick={() => void downloadArtwork()}
+              disabled={downloading}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-brand-red px-3 py-1.5 text-xs font-semibold text-brand-red transition hover:bg-brand-red hover:text-white disabled:opacity-60"
+            >
+              <Download className="h-3.5 w-3.5" />
+              {downloading ? "Downloading…" : "Download artwork"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {rows.length > 0 && (
+        <dl className="mt-4 grid gap-x-6 gap-y-2 border-t border-border pt-3 text-xs sm:grid-cols-2">
+          {rows.map((row) => (
+            <div key={row.key} className="flex items-start justify-between gap-3">
+              <dt className="text-muted-foreground">{row.label}</dt>
+              <dd className="flex items-center gap-1.5 text-right font-medium text-brand-ink">
+                {row.color && (
+                  <span
+                    className="inline-block h-3 w-3 rounded-full border border-border"
+                    style={{ backgroundColor: row.color }}
+                  />
+                )}
+                {row.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
+  );
+}
+
+function OrderDetailsDialog({
+  order,
+  onClose,
+}: {
+  order: AdminOrder | null;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog
+      open={!!order}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent className="max-h-[90vh] w-[calc(100%-2rem)] max-w-3xl gap-0 overflow-y-auto rounded-[25px] p-0 sm:rounded-[25px]">
+        {order && (
+          <>
+            <div className="sticky top-0 z-10 border-b border-border bg-white px-5 py-4 pr-14 md:px-6">
+              <DialogHeader>
+                <DialogTitle className="font-display text-xl text-brand-ink">
+                  Order #{shortOrderId(order.id)}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground">
+                  {new Date(order.created_at).toLocaleString()} · {order.status}
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+
+            <div className="space-y-6 px-5 py-5 md:px-6">
+              <section className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Customer
+                  </h3>
+                  <p className="mt-2 font-display text-lg text-brand-ink">
+                    {order.customer_name || "Customer"}
+                  </p>
+                  {order.phone && (
+                    <a
+                      href={`tel:${order.phone}`}
+                      className="mt-1 block text-sm text-brand-red hover:underline"
+                    >
+                      {order.phone}
+                    </a>
+                  )}
+                  {order.email && (
+                    <a
+                      href={`mailto:${order.email}`}
+                      className="block text-sm text-brand-red hover:underline"
+                    >
+                      {order.email}
+                    </a>
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Delivery address
+                  </h3>
+                  <p className="mt-2 whitespace-pre-line text-sm text-brand-ink">
+                    {order.address || "—"}
+                  </p>
+                  {order.notes && (
+                    <p className="mt-2 text-xs italic text-muted-foreground">
+                      Notes: {order.notes}
+                    </p>
+                  )}
+                </div>
+              </section>
+
+              <section>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Items ({order.order_items.length})
+                  </h3>
+                  <p className="font-display text-lg text-brand-red">{formatPrice(order.subtotal)}</p>
+                </div>
+                <div className="space-y-4">
+                  {order.order_items.map((item, index) => (
+                    <OrderItemDetails
+                      key={`${order.id}-${index}`}
+                      item={item}
+                      order={order}
+                      index={index}
+                    />
+                  ))}
+                </div>
+              </section>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function OrdersTab() {
+  const [selected, setSelected] = useState<AdminOrder | null>(null);
+
   const { data } = useQuery({
     queryKey: ["admin", "orders"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("id, customer_name, email, phone, address, notes, subtotal, status, created_at, order_items(name, qty, unit_price)")
+        .select(
+          "id, customer_name, email, phone, address, notes, subtotal, status, created_at, order_items(name, qty, unit_price, slug, config)",
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data ?? []) as unknown as AdminOrder[];
     },
   });
 
@@ -1065,36 +1442,53 @@ function OrdersTab() {
     );
 
   return (
-    <div className="space-y-4">
-      {data.map((o) => (
-        <Card key={o.id}>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="font-display text-lg text-brand-ink">{o.customer_name || "Customer"}</p>
-              <p className="text-xs text-muted-foreground">
-                {new Date(o.created_at).toLocaleString()} · {o.phone} {o.email && `· ${o.email}`}
-              </p>
-              <p className="mt-1 max-w-xl text-xs text-muted-foreground">{o.address}</p>
-              {o.notes && <p className="mt-1 text-xs italic text-muted-foreground">“{o.notes}”</p>}
-            </div>
-            <div className="text-right">
-              <p className="font-display text-xl text-brand-red">{formatPrice(o.subtotal)}</p>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">{o.status}</p>
-            </div>
-          </div>
-          <ul className="mt-3 space-y-1 border-t border-border pt-3 text-sm text-brand-ink">
-            {o.order_items.map((li, k) => (
-              <li key={k} className="flex justify-between">
-                <span>
-                  {li.name} × {li.qty}
-                </span>
-                <span>{formatPrice(li.unit_price * li.qty)}</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ))}
-    </div>
+    <>
+      <div className="space-y-4">
+        {data.map((o) => {
+          const itemCount = o.order_items.reduce((sum, item) => sum + item.qty, 0);
+          return (
+            <Card key={o.id}>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-display text-lg text-brand-ink">
+                      {o.customer_name || "Customer"}
+                    </p>
+                    <span className="rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {o.status}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Order #{shortOrderId(o.id)} · {new Date(o.created_at).toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {o.phone}
+                    {o.email && ` · ${o.email}`}
+                  </p>
+                  <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
+                    {itemCount} item{itemCount === 1 ? "" : "s"} ·{" "}
+                    {o.order_items.map((item) => `${item.name} × ${item.qty}`).join(", ")}
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-end gap-2">
+                  <p className="font-display text-xl text-brand-red">{formatPrice(o.subtotal)}</p>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(o)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-brand-red px-4 py-2 text-xs font-semibold text-brand-red transition hover:bg-brand-red hover:text-white"
+                  >
+                    <Eye className="h-3.5 w-3.5" /> View details
+                  </button>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      <OrderDetailsDialog order={selected} onClose={() => setSelected(null)} />
+    </>
   );
 }
 

@@ -27,6 +27,7 @@ export async function uploadProductPhoto(file: File, slug: string): Promise<Uplo
   const { data: auth } = await supabase.auth.getUser();
   const owner = auth.user?.id ?? "guest";
   const path = `${owner}/${slug}/${crypto.randomUUID()}.${safeExtension(file)}`;
+  console.log("path lohg", path);
 
   const { error } = await supabase.storage
     .from(PRODUCT_UPLOADS_BUCKET)
