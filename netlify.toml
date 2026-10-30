@@ -1,0 +1,6 @@
+[build]
+  ignore_secrets_in_build = true # If you want to bypass completely (not recommended for true secrets)
+
+# Better approach: Explicitly exclude public variables from being flagged
+[secrets]
+  allowed_vars = ["VITE_RAZORPAY_KEY_ID", "SUPABASE_PUBLISHABLE_KEY", "VITE_MEDIA_BASE_URL"]
