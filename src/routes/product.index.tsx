@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { customAcrylic, corporateGifting, returnGifts } from "@/data/products";
 import { ProductTile } from "@/components/product/ProductTile";
 import { imgBySlug } from "@/data/product-images";
-import { useProducts } from "@/lib/store";
+import { useMedia, useProducts } from "@/lib/store";
 import {
   NAME_MAX_LENGTH,
   MESSAGE_MAX_LENGTH,
@@ -30,7 +30,6 @@ const ad1 = { url: assetUrl("Advertisment_Card.png") };
 const ad2 = { url: assetUrl("Advertisement_card_2.png") };
 const gCorporate = { url: assetUrl("Corporate_gifting.png") };
 const gReturn = { url: assetUrl("Return_Gifts.png") };
-
 type Tab = "custom" | "corporate" | "return";
 
 export const Route = createFileRoute("/product/")({
@@ -65,6 +64,7 @@ const tabs: { id: Tab; label: string; img: string }[] = [
 ];
 
 function ProductListing() {
+  const { media } = useMedia();
   const { tab } = Route.useSearch();
   return (
     <>
@@ -132,11 +132,12 @@ function ProductListing() {
 
       <section className="my-12">
         <img
-          src={ad1.url}
+          src={media("ad-1", ad1.url)}
           alt="Enriching relationships through thoughtful gifts"
           className="w-full"
           loading="lazy"
         />
+        {/* <p>{ad1.url}</p> */}
       </section>
 
       <EnquireBand />
@@ -144,7 +145,7 @@ function ProductListing() {
       <section className="my-12">
         <Link to="/contact" className="block">
           <img
-            src={ad2.url}
+            src={media("ad-2", ad2.url)}
             alt="To know more about our products — call +91 93632 96919 or email bcube@gmail.com"
             className="w-full"
             loading="lazy"
