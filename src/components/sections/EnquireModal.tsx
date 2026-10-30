@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -48,14 +47,6 @@ export function EnquireModal() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-md rounded-[25px] border-none bg-brand-yellow p-0 shadow-2xl sm:max-w-lg">
         <div className="p-6 sm:p-8">
-          <button
-            onClick={() => setOpen(false)}
-            className="absolute right-4 top-4 rounded-full p-1.5 text-brand-ink/70 transition-colors hover:bg-white/50 hover:text-brand-ink"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-
           <DialogTitle className="font-display text-3xl italic text-brand-red sm:text-4xl">
             Enquire Now
           </DialogTitle>

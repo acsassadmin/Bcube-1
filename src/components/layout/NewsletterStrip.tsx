@@ -1,13 +1,32 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { submitEnquiry } from "@/lib/enquiries";
+import { validateEmail } from "@/lib/validation";
 
 export function NewsletterStrip() {
   const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
   return (
     <form
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
-        if (!email) return;
+        const error = validateEmail(email);
+        if (error) {
+          toast.error(error);
+          return;
+        }
+        setSubmitting(true);
+        const ok = await submitEnquiry({
+          source: "newsletter",
+          email: email.trim(),
+          message: "Subscribed to newsletters from the footer.",
+        });
+        setSubmitting(false);
+        if (!ok) {
+          toast.error("Could not subscribe right now. Please try again.");
+          return;
+        }
         toast.success("Subscribed! We'll keep in touch.");
         setEmail("");
       }}
@@ -18,13 +37,19 @@ export function NewsletterStrip() {
         <input
           type="email"
           required
+          maxLength={254}
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter your email"
           className="flex-1 bg-transparent px-4 py-2 text-sm text-brand-ink outline-none"
         />
-        <button className="rounded-full bg-brand-red px-5 py-2 text-sm font-semibold text-white hover:bg-brand-red-dark">
-          Subscribe Now
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-full bg-brand-red px-5 py-2 text-sm font-semibold text-white hover:bg-brand-red-dark disabled:opacity-60"
+        >
+          {submitting ? "Subscribing…" : "Subscribe Now"}
         </button>
       </div>
     </form>
