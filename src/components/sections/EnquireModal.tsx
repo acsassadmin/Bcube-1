@@ -10,6 +10,13 @@ import {
 import { MagneticButton } from "@/components/motion/MagneticButton";
 import { submitEnquiry } from "@/lib/enquiries";
 import { useScrollTrigger } from "@/hooks/use-scroll-trigger";
+import {
+  NAME_MAX_LENGTH,
+  MESSAGE_MAX_LENGTH,
+  capitalizeName,
+  sanitizePhone,
+  validateContactFields,
+} from "@/lib/validation";
 
 export function EnquireModal() {
   const [open, setOpen] = useState(false);
@@ -20,8 +27,13 @@ export function EnquireModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const error = validateContactFields(form);
+    if (error) {
+      toast.error(error);
+      return;
+    }
     setSubmitting(true);
-    const ok = await submitEnquiry({ source: "home-modal", ...form });
+    const ok = await submitEnquiry({ source: "home-modal", ...form, name: form.name.trim(), email: form.email.trim() });
     setSubmitting(false);
     if (!ok) {
       toast.error("Could not send your enquiry. Please try again.");
@@ -55,28 +67,38 @@ export function EnquireModal() {
             <input
               required
               placeholder="Name"
+              autoComplete="name"
+              maxLength={NAME_MAX_LENGTH}
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(e) => setForm({ ...form, name: capitalizeName(e.target.value) })}
               className="rounded-xl bg-white px-4 py-3 text-sm text-brand-ink outline-none placeholder:text-brand-ink/50 focus:ring-2 focus:ring-brand-red"
             />
             <input
               required
               type="email"
               placeholder="Email"
+              autoComplete="email"
+              maxLength={254}
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               className="rounded-xl bg-white px-4 py-3 text-sm text-brand-ink outline-none placeholder:text-brand-ink/50 focus:ring-2 focus:ring-brand-red"
             />
             <input
               required
-              placeholder="Phone"
+              type="tel"
+              inputMode="numeric"
+              placeholder="Phone (10 digits)"
+              autoComplete="tel-national"
+              pattern="[6-9][0-9]{9}"
+              title="Enter a 10-digit mobile number starting with 6–9"
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              onChange={(e) => setForm({ ...form, phone: sanitizePhone(e.target.value) })}
               className="rounded-xl bg-white px-4 py-3 text-sm text-brand-ink outline-none placeholder:text-brand-ink/50 focus:ring-2 focus:ring-brand-red"
             />
             <textarea
               placeholder="Message"
               rows={3}
+              maxLength={MESSAGE_MAX_LENGTH}
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
               className="rounded-xl bg-white px-4 py-3 text-sm text-brand-ink outline-none placeholder:text-brand-ink/50 focus:ring-2 focus:ring-brand-red"

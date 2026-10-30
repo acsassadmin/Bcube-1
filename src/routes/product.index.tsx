@@ -7,6 +7,13 @@ import { customAcrylic, corporateGifting, returnGifts } from "@/data/products";
 import { ProductTile } from "@/components/product/ProductTile";
 import { imgBySlug } from "@/data/product-images";
 import { useProducts } from "@/lib/store";
+import {
+  NAME_MAX_LENGTH,
+  MESSAGE_MAX_LENGTH,
+  capitalizeName,
+  sanitizePhone,
+  validateContactFields,
+} from "@/lib/validation";
 
 const cat1 = { url: assetUrl("Cat1.png") };
 const cat2 = { url: assetUrl("Cat2.png") };
@@ -189,6 +196,11 @@ function EnquireBand() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            const error = validateContactFields(form);
+            if (error) {
+              toast.error(error);
+              return;
+            }
             toast.success("Enquiry sent — we'll be in touch!");
             setForm({ name: "", email: "", phone: "", message: "" });
           }}
@@ -197,28 +209,38 @@ function EnquireBand() {
           <input
             required
             placeholder="Name"
+            autoComplete="name"
+            maxLength={NAME_MAX_LENGTH}
             value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            onChange={(e) => setForm({ ...form, name: capitalizeName(e.target.value) })}
             className="rounded-md bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red"
           />
           <input
             required
             type="email"
             placeholder="Email"
+            autoComplete="email"
+            maxLength={254}
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             className="rounded-md bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red"
           />
           <input
             required
-            placeholder="Phone"
+            type="tel"
+            inputMode="numeric"
+            placeholder="Phone (10 digits)"
+            autoComplete="tel-national"
+            pattern="[6-9][0-9]{9}"
+            title="Enter a 10-digit mobile number starting with 6–9"
             value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            onChange={(e) => setForm({ ...form, phone: sanitizePhone(e.target.value) })}
             className="rounded-md bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red"
           />
           <textarea
             placeholder="Message"
             rows={1}
+            maxLength={MESSAGE_MAX_LENGTH}
             value={form.message}
             onChange={(e) => setForm({ ...form, message: e.target.value })}
             className="rounded-md bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red sm:row-span-2 sm:col-start-2 sm:row-start-1 sm:h-full"

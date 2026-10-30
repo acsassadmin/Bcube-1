@@ -6,6 +6,13 @@ import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
 import { submitEnquiry } from "@/lib/enquiries";
 import { useMedia } from "@/lib/store";
+import {
+  NAME_MAX_LENGTH,
+  MESSAGE_MAX_LENGTH,
+  capitalizeName,
+  sanitizePhone,
+  validateContactFields,
+} from "@/lib/validation";
 
 /* Site media — resolved from Supabase Storage when VITE_MEDIA_BASE_URL is set. */
 const logo = { url: assetUrl("LOGO.png") };
@@ -61,13 +68,29 @@ function ContactSection() {
   const [form, setForm] = useState<ContactEnquiry>(emptyEnquiry);
   const [submitting, setSubmitting] = useState(false);
 
-  const set = (key: keyof ContactEnquiry) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }));
+  const set =
+    (key: keyof ContactEnquiry, sanitize?: (value: string) => string) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm((f) => ({ ...f, [key]: sanitize ? sanitize(e.target.value) : e.target.value }));
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const error = validateContactFields(form);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    if (!form.message.trim()) {
+      toast.error("Please enter a message.");
+      return;
+    }
     setSubmitting(true);
-    const ok = await submitEnquiry({ source: "contact", ...form });
+    const ok = await submitEnquiry({
+      source: "contact",
+      ...form,
+      name: form.name.trim(),
+      email: form.email.trim(),
+    });
     if (ok) {
       toast.success("Thanks! We'll get back to you shortly.");
       setForm(emptyEnquiry);
@@ -97,10 +120,35 @@ function ContactSection() {
 
         <form onSubmit={(e) => void onSubmit(e)} className="rounded-[25px] bg-brand-yellow p-6 sm:p-8 md:p-[40px]">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name" value={form.name} onChange={set("name")} required />
-            <Field label="Phone" type="tel" value={form.phone} onChange={set("phone")} required />
+            <Field
+              label="Name"
+              value={form.name}
+              onChange={set("name", capitalizeName)}
+              autoComplete="name"
+              maxLength={NAME_MAX_LENGTH}
+              required
+            />
+            <Field
+              label="Phone"
+              type="tel"
+              value={form.phone}
+              onChange={set("phone", sanitizePhone)}
+              autoComplete="tel-national"
+              inputMode="numeric"
+              pattern="[6-9][0-9]{9}"
+              title="Enter a 10-digit mobile number starting with 6–9"
+              required
+            />
             <div className="sm:col-span-2">
-              <Field label="Email" type="email" value={form.email} onChange={set("email")} required />
+              <Field
+                label="Email"
+                type="email"
+                value={form.email}
+                onChange={set("email")}
+                autoComplete="email"
+                maxLength={254}
+                required
+              />
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold uppercase tracking-wide text-brand-ink/70">Message</label>
@@ -108,6 +156,7 @@ function ContactSection() {
                 value={form.message}
                 onChange={set("message")}
                 rows={4}
+                maxLength={MESSAGE_MAX_LENGTH}
                 required
                 className="mt-1 w-full rounded-2xl border border-white/60 bg-white/80 px-4 py-2 text-sm text-brand-ink outline-none focus:border-brand-red"
               />
@@ -132,12 +181,22 @@ function Field({
   value,
   onChange,
   required,
+  autoComplete,
+  inputMode,
+  maxLength,
+  pattern,
+  title,
 }: {
   label: string;
   type?: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   required?: boolean;
+  autoComplete?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  maxLength?: number;
+  pattern?: string;
+  title?: string;
 }) {
   return (
     <div>
@@ -147,6 +206,11 @@ function Field({
         value={value}
         onChange={onChange}
         required={required}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        maxLength={maxLength}
+        pattern={pattern}
+        title={title}
         className="mt-1 w-full rounded-full border border-white/60 bg-white/80 px-4 py-2 text-sm text-brand-ink outline-none focus:border-brand-red"
       />
     </div>

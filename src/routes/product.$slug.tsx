@@ -16,6 +16,17 @@ import { MagneticButton } from "@/components/motion/MagneticButton";
 import { computePrice, formatPrice } from "@/data/pricing";
 import { useProducts, usePricing } from "@/lib/store";
 import { uploadProductPhoto } from "@/lib/uploads";
+import {
+  MIN_BULK_QUANTITY,
+  NAME_MAX_LENGTH,
+  MESSAGE_MAX_LENGTH,
+  capitalizeName,
+  isValidPincode,
+  sanitizePhone,
+  sanitizePincode,
+  sanitizeQuantity,
+  validateContactFields,
+} from "@/lib/validation";
 import roomImg from "@/assets/room-preview.jpg";
 
 export const Route = createFileRoute("/product/$slug")({
@@ -723,24 +734,59 @@ function StepSize({ state, dispatch, price }: { state: State; dispatch: React.Di
   );
 }
 
+const BUYER_FIELD_LIST = [
+  {
+    k: "name",
+    label: "Name",
+    placeholder: "Enter name here",
+    type: "text",
+    autoComplete: "name",
+    maxLength: NAME_MAX_LENGTH,
+    inputMode: undefined,
+    pattern: undefined,
+    title: undefined,
+    sanitize: capitalizeName,
+  },
+  {
+    k: "phone",
+    label: "Phone number",
+    placeholder: "Enter 10-digit number",
+    type: "tel",
+    autoComplete: "tel-national",
+    inputMode: "numeric" as const,
+    pattern: "[6-9][0-9]{9}",
+    title: "Enter a 10-digit mobile number starting with 6–9",
+    sanitize: sanitizePhone,
+  },
+  {
+    k: "email",
+    label: "Email",
+    placeholder: "Enter email here",
+    type: "email",
+    autoComplete: "email",
+    maxLength: 254,
+    inputMode: undefined,
+    pattern: undefined,
+    title: undefined,
+    sanitize: (v: string) => v,
+  },
+] as const;
+
 function BuyerFields({
   form, setForm, compact = false,
 }: { form: Record<string, string>; setForm: (f: Record<string, string>) => void; compact?: boolean }) {
   return (
     <>
-      {[
-        { k: "name", label: "Name", placeholder: "Enter name here", type: "text" },
-        { k: "phone", label: "Phone number", placeholder: "Enter number here", type: "tel" },
-        { k: "email", label: "Email", placeholder: "Enter here", type: "email" },
-      ].map(({ k, label, placeholder, type }) => (
+      {BUYER_FIELD_LIST.map(({ k, label, placeholder, type, sanitize, ...attrs }) => (
         <div key={k}>
           <label className={`${compact ? "text-xs" : "text-sm"} text-brand-red`}>{label}</label>
           <input
             required
             type={type}
             value={form[k] ?? ""}
-            onChange={(e) => setForm({ ...form, [k]: e.target.value })}
+            onChange={(e) => setForm({ ...form, [k]: sanitize(e.target.value) })}
             placeholder={placeholder}
+            {...attrs}
             className={`mt-1 w-full rounded-full border border-border bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-brand-red ${compact ? "py-2" : "py-2.5"}`}
           />
         </div>
@@ -761,7 +807,11 @@ function StepPreviewForm({
         onSubmit={(e) => {
           e.preventDefault();
           if (!accepted) { toast.error("Please accept the terms"); return; }
-          onBuy(form);
+          const error = validateContactFields(form);
+          if (error) { toast.error(error); return; }
+          if (!isValidPincode(form.pincode)) { toast.error("Please enter a valid 6-digit pincode."); return; }
+          if (form.address.trim().length < 10) { toast.error("Please enter your full delivery address."); return; }
+          onBuy({ ...form, name: form.name.trim(), email: form.email.trim() });
           setForm({ name: "", phone: "", email: "", idea: "", address: "", pincode: "" });
           setAccepted(true);
         }}
@@ -776,8 +826,12 @@ function StepPreviewForm({
               <span className="shrink-0 rounded-full border border-border bg-white px-3 py-2 text-sm">🇮🇳 Ind</span>
               <input
                 required
+                type="tel"
+                inputMode="numeric"
+                pattern="[1-9][0-9]{5}"
+                title="Enter a valid 6-digit pincode"
                 value={form.pincode}
-                onChange={(e) => setForm({ ...form, pincode: e.target.value })}
+                onChange={(e) => setForm({ ...form, pincode: sanitizePincode(e.target.value) })}
                 placeholder="Enter Pincode"
                 className="w-full min-w-0 rounded-full border border-border bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-red"
               />
@@ -833,7 +887,20 @@ function EnquiryCard({
           : "We'll make it come to real-life."}
       />
       <form
-        onSubmit={(e) => { e.preventDefault(); onBuy({ ...form, mode }); setForm({ name: "", phone: "", email: "", quantity: "", message: "" }); }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          const error = validateContactFields(form);
+          if (error) { toast.error(error); return; }
+          if (bulk) {
+            const quantity = Number(form.quantity);
+            if (!Number.isInteger(quantity) || quantity < MIN_BULK_QUANTITY) {
+              toast.error(`Please enter a quantity of at least ${MIN_BULK_QUANTITY}.`);
+              return;
+            }
+          }
+          onBuy({ ...form, mode, name: form.name.trim(), email: form.email.trim() });
+          setForm({ name: "", phone: "", email: "", quantity: "", message: "" });
+        }}
         className="flex flex-1 flex-col space-y-4"
       >
         <BuyerFields form={form} setForm={setForm} />
@@ -843,10 +910,12 @@ function EnquiryCard({
             <input
               required
               type="number"
-              min={10}
+              inputMode="numeric"
+              min={MIN_BULK_QUANTITY}
+              step={1}
               value={form.quantity}
-              onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-              placeholder="e.g. 100"
+              onChange={(e) => setForm({ ...form, quantity: sanitizeQuantity(e.target.value) })}
+              placeholder={`e.g. ${MIN_BULK_QUANTITY * 10}`}
               className="mt-1 w-full rounded-full border border-border bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red"
             />
           </div>
@@ -855,6 +924,7 @@ function EnquiryCard({
           <label className="text-sm text-brand-red">Your idea</label>
           <textarea
             rows={3}
+            maxLength={MESSAGE_MAX_LENGTH}
             value={form.message}
             onChange={(e) => setForm({ ...form, message: e.target.value })}
             placeholder={bulk ? "Branding, packaging, delivery date…" : "Tell us what you have in mind"}

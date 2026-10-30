@@ -22,15 +22,32 @@ function normalise(raw: unknown): CartItem[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter((i): i is Record<string, unknown> => !!i && typeof i === "object")
-    .map((i, idx) => ({
-      id: typeof i["id"] === "string" ? (i["id"] as string) : `line-${idx}-${String(i["slug"] ?? "")}`,
-      slug: String(i["slug"] ?? ""),
-      name: String(i["name"] ?? ""),
-      qty: typeof i["qty"] === "number" && i["qty"] > 0 ? (i["qty"] as number) : 1,
-      config: (i["config"] as Record<string, unknown> | undefined) ?? undefined,
-    }));
+    .map((i, idx) => {
+      const config = (i["config"] as Record<string, unknown> | undefined) ?? undefined;
+      const nestedQty = config?.buyerInfo
+        ? Number((config.buyerInfo as Record<string, unknown>)["quantity"])
+        : undefined;
+      const fallbackQty = typeof i["qty"] === "number" && i["qty"] > 0 ? (i["qty"] as number) : 1;
+      const parsedQty = nestedQty && nestedQty > 0 && !isNaN(nestedQty) ? nestedQty : fallbackQty;
+      if (config) {
+        const buyerInfo = (config.buyerInfo as Record<string, unknown> | undefined)
+          ? { ...(config.buyerInfo as Record<string, unknown>) }
+          : {};
+        buyerInfo.quantity = parsedQty;
+        config.buyerInfo = buyerInfo;
+      }
+      return {
+        id:
+          typeof i["id"] === "string"
+            ? (i["id"] as string)
+            : `line-${idx}-${String(i["slug"] ?? "")}`,
+        slug: String(i["slug"] ?? ""),
+        name: String(i["name"] ?? ""),
+        qty: parsedQty,
+        config,
+      };
+    });
 }
-
 function read(): CartItem[] {
   if (typeof window === "undefined") return [];
   try {
@@ -72,10 +89,17 @@ export function useCart() {
       const uid = data.session?.user.id ?? null;
       userId.current = uid;
       if (!uid || !active) return;
-      const { data: row } = await supabase.from("carts").select("items").eq("user_id", uid).maybeSingle();
+      const { data: row } = await supabase
+        .from("carts")
+        .select("items")
+        .eq("user_id", uid)
+        .maybeSingle();
       const remote = normalise(row?.items);
       const local = read();
-      const merged = local.length > 0 ? [...remote.filter((r) => !local.some((l) => l.id === r.id)), ...local] : remote;
+      const merged =
+        local.length > 0
+          ? [...remote.filter((r) => !local.some((l) => l.id === r.id)), ...local]
+          : remote;
       if (!active) return;
       write(merged);
       setItems(merged);
@@ -96,19 +120,49 @@ export function useCart() {
     (item: Omit<CartItem, "id" | "qty"> & Partial<Pick<CartItem, "qty">>) => {
       commit([
         ...read(),
-        { ...item, qty: item.qty ?? 1, id: `${item.slug}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` },
+        {
+          ...item,
+          qty: item.qty ?? 1,
+          id: `${item.slug}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        },
       ]);
     },
     [commit],
   );
 
-  const removeItem = useCallback((id: string) => commit(read().filter((i) => i.id !== id)), [commit]);
-
-  const setQty = useCallback(
-    (id: string, qty: number) => commit(read().map((i) => (i.id === id ? { ...i, qty: Math.max(1, Math.min(99, qty)) } : i))),
+  const removeItem = useCallback(
+    (id: string) => commit(read().filter((i) => i.id !== id)),
     [commit],
   );
 
+  // const setQty = useCallback(
+  //   (id: string, qty: number) => commit(read().map((i) => (i.id === id ? { ...i, qty: Math.max(1, Math.min(99, qty)) } : i))),
+  //   [commit],
+  // );
+
+  const setQty = useCallback(
+    (id: string, qty: number) => {
+      const nextQty = Math.max(10, qty);
+
+      const updatedItems = read().map((item) => {
+        if (item.id !== id) return item;
+        const updatedConfig = item.config ? { ...item.config } : {};
+        const buyerInfo = (updatedConfig.buyerInfo as Record<string, unknown> | undefined)
+          ? { ...(updatedConfig.buyerInfo as Record<string, unknown>) }
+          : {};
+        buyerInfo.quantity = nextQty;
+        updatedConfig.buyerInfo = buyerInfo;
+        return {
+          ...item,
+          qty: nextQty,
+          config: updatedConfig,
+        };
+      });
+
+      commit(updatedItems);
+    },
+    [commit],
+  );
   const clear = useCallback(() => commit([]), [commit]);
 
   const count = items.reduce((n, i) => n + i.qty, 0);

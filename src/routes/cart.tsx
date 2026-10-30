@@ -9,7 +9,15 @@ import { useProducts } from "@/lib/store";
 import { placeOrder, type CheckoutDetails } from "@/lib/orders";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-
+import {
+  MESSAGE_MAX_LENGTH,
+  NAME_MAX_LENGTH,
+  capitalizeName,
+  sanitizePhone,
+  validateEmail,
+  validateName,
+  validatePhone,
+} from "@/lib/validation";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
@@ -65,8 +73,9 @@ function CartPage() {
   const [placing, setPlacing] = useState(false);
 
   const setField =
-    (k: keyof CheckoutDetails) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      setDetails((d) => ({ ...d, [k]: e.target.value }));
+    (k: keyof CheckoutDetails, sanitize?: (value: string) => string) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setDetails((d) => ({ ...d, [k]: sanitize ? sanitize(e.target.value) : e.target.value }));
 
   async function handleCheckout() {
     if (!user) {
@@ -74,8 +83,16 @@ function CartPage() {
       void navigate({ to: "/login" });
       return;
     }
-    if (!details.customer_name || !details.phone || !details.address) {
-      toast.error("Please add your name, phone and delivery address.");
+    const error =
+      validateName(details.customer_name) ??
+      validatePhone(details.phone) ??
+      validateEmail(details.email, { required: false });
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    if (details.address.trim().length < 10) {
+      toast.error("Please enter your full delivery address.");
       return;
     }
     setPlacing(true);
@@ -88,7 +105,13 @@ function CartPage() {
     }
 
     const result = await placeOrder({
-      details: { ...details, email: details.email || (user.email ?? "") },
+      details: {
+        ...details,
+        customer_name: details.customer_name.trim(),
+        email: (details.email || user.email || "").trim(),
+        phone: details.phone.trim(),
+        address: details.address.trim(),
+      },
       items,
       subtotal,
     });
@@ -100,17 +123,15 @@ function CartPage() {
     }
 
     try {
-      const { data: rzpOrder, error: rzpInvokeError } =
-        await supabase.functions.invoke("razorpay", {
+      const { data: rzpOrder, error: rzpInvokeError } = await supabase.functions.invoke(
+        "razorpay",
+        {
           body: { action: "create_order", amount: result.amount * 100 },
-        });
+        },
+      );
 
       if (rzpInvokeError || !rzpOrder?.id) {
-        throw new Error(
-          rzpInvokeError?.message ||
-            rzpOrder?.error ||
-            "Payment setup failed.",
-        );
+        throw new Error(rzpInvokeError?.message || rzpOrder?.error || "Payment setup failed.");
       }
 
       // Save Razorpay order ID to our order record
@@ -129,15 +150,17 @@ function CartPage() {
         handler: async function (response: any) {
           setPlacing(true);
           try {
-            const { data: verifyData, error: verifyInvokeError } =
-              await supabase.functions.invoke("razorpay", {
+            const { data: verifyData, error: verifyInvokeError } = await supabase.functions.invoke(
+              "razorpay",
+              {
                 body: {
                   action: "verify",
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
                 },
-              });
+              },
+            );
 
             if (verifyInvokeError) {
               console.error(verifyInvokeError);
@@ -217,6 +240,10 @@ function CartPage() {
                 const size = item.config?.["size"] as string | undefined;
                 const thickness = item.config?.["thickness"] as string | undefined;
                 const shape = item.config?.["shape"] as string | undefined;
+
+                const currentQty = Number(
+                  (item.config?.buyerInfo as Record<string, any>)?.["quantity"],
+                );
                 return (
                   <li
                     key={item.id}
@@ -258,17 +285,17 @@ function CartPage() {
                       <div className="mt-4 flex items-center justify-between gap-3">
                         <div className="inline-flex items-center rounded-full border border-border">
                           <button
-                            onClick={() => setQty(item.id, item.qty - 1)}
+                            onClick={() => setQty(item.id, currentQty - 1)}
                             aria-label="Decrease quantity"
                             className="grid h-8 w-8 place-items-center rounded-full text-brand-ink hover:bg-muted"
                           >
                             <Minus className="h-3.5 w-3.5" />
                           </button>
                           <span className="w-8 text-center text-sm font-semibold text-brand-ink">
-                            {item.qty}
+                            {currentQty}
                           </span>
                           <button
-                            onClick={() => setQty(item.id, item.qty + 1)}
+                            onClick={() => setQty(item.id, currentQty + 1)}
                             aria-label="Increase quantity"
                             className="grid h-8 w-8 place-items-center rounded-full text-brand-ink hover:bg-muted"
                           >
@@ -276,7 +303,7 @@ function CartPage() {
                           </button>
                         </div>
                         <p className="font-display text-lg text-brand-red">
-                          {formatPrice(price * item.qty)}
+                          {formatPrice(price * currentQty)}
                         </p>
                       </div>
                     </div>
@@ -307,28 +334,40 @@ function CartPage() {
               <div className="mt-5 space-y-2">
                 <CheckoutField
                   placeholder="Full name"
+                  autoComplete="name"
+                  maxLength={NAME_MAX_LENGTH}
                   value={details.customer_name}
-                  onChange={setField("customer_name")}
+                  onChange={setField("customer_name", capitalizeName)}
                 />
                 <CheckoutField
-                  placeholder="Phone"
+                  placeholder="Phone (10 digits)"
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[6-9][0-9]{9}"
+                  title="Enter a 10-digit mobile number starting with 6–9"
+                  autoComplete="tel-national"
                   value={details.phone}
-                  onChange={setField("phone")}
+                  onChange={setField("phone", sanitizePhone)}
                 />
                 <CheckoutField
                   placeholder="Email (optional)"
+                  type="email"
+                  autoComplete="email"
+                  maxLength={254}
                   value={details.email}
                   onChange={setField("email")}
                 />
                 <textarea
                   placeholder="Delivery address"
                   rows={3}
+                  maxLength={300}
                   value={details.address}
                   onChange={setField("address")}
                   className="w-full rounded-2xl border border-border px-4 py-2 text-sm text-brand-ink outline-none focus:border-brand-red"
                 />
                 <CheckoutField
                   placeholder="Notes for our team (optional)"
+                  maxLength={MESSAGE_MAX_LENGTH}
                   value={details.notes}
                   onChange={setField("notes")}
                 />
@@ -359,16 +398,34 @@ function CheckoutField({
   placeholder,
   value,
   onChange,
+  type = "text",
+  autoComplete,
+  inputMode,
+  pattern,
+  maxLength,
+  title,
 }: {
   placeholder: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  autoComplete?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  pattern?: string;
+  maxLength?: number;
+  title?: string;
 }) {
   return (
     <input
+      type={type}
       placeholder={placeholder}
       value={value}
       onChange={onChange}
+      autoComplete={autoComplete}
+      inputMode={inputMode}
+      pattern={pattern}
+      maxLength={maxLength}
+      title={title}
       className="w-full rounded-full border border-border px-4 py-2 text-sm text-brand-ink outline-none focus:border-brand-red"
     />
   );
