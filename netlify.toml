@@ -1,6 +1,3 @@
 [build]
-  ignore_secrets_in_build = true # If you want to bypass completely (not recommended for true secrets)
-
-# Better approach: Explicitly exclude public variables from being flagged
-[secrets]
-  allowed_vars = ["VITE_RAZORPAY_KEY_ID", "SUPABASE_PUBLISHABLE_KEY", "VITE_MEDIA_BASE_URL"]
+  # Tell Netlify's secret scanner to allow these public environment variables
+  environment = { ALLOWED_SECRET_SCANNING_VARS = "RAZORPAY_KEY_ID,VITE_SUPABASE_PUBLISHABLE_KEY,VITE_SUPABASE_URL,SUPABASE_PROJECT_ID,VITE_MEDIA_BASE_URL" }
