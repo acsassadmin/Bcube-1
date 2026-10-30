@@ -3,6 +3,7 @@
 This guide explains how to deploy the **Razorpay payment function** to **Supabase**.
 
 > ⚠️ **Important distinction:**
+>
 > - **Remote Functions** (Node.js) → can use npm packages like `razorpay` ✅
 > - **Edge Functions** (Deno) → **cannot** use npm packages like `razorpay` ❌
 >
@@ -20,13 +21,13 @@ This guide explains how to deploy the **Razorpay payment function** to **Supabas
 
 ### Get your credentials
 
-| Credential | Where to find |
-|------------|---------------|
-| Supabase URL | Dashboard → Project Settings → API |
-| Supabase anon key | Dashboard → Project Settings → API |
+| Credential                | Where to find                      |
+| ------------------------- | ---------------------------------- |
+| Supabase URL              | Dashboard → Project Settings → API |
+| Supabase anon key         | Dashboard → Project Settings → API |
 | Supabase service_role key | Dashboard → Project Settings → API |
-| Razorpay Key ID | Dashboard → Developers → API Keys |
-| Razorpay Key Secret | Dashboard → Developers → API Keys |
+| Razorpay Key ID           | Dashboard → Developers → API Keys  |
+| Razorpay Key Secret       | Dashboard → Developers → API Keys  |
 
 ---
 
@@ -42,11 +43,13 @@ supabase/
 ```
 
 **Option A: Use the existing Nitro function** (recommended for this project)
+
 ```
 src/server/functions/razorpay.ts   # Move/copy this to supabase/functions/razorpay/index.ts
 ```
 
 **Option B: Create a fresh Supabase project**
+
 ```
 supabase/functions/
   razorpay/
@@ -68,15 +71,16 @@ RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxx
 
 # Supabase (Settings → API)
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_SERVICE_ROLE_KEY=<your-supabase-service-role-key>
 ```
 
 > 💡 For local testing, create a `.env` file in the root of your project:
+>
 > ```env
 > RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
 > RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxx
 > SUPABASE_URL=https://your-project.supabase.co
-> SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+> SUPABASE_SERVICE_ROLE_KEY=<your-supabase-service-role-key>
 > ```
 
 ---
@@ -86,6 +90,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ### Option A: Using the Supabase CLI (recommended)
 
 1. **Install the Supabase CLI**
+
    ```bash
    npm install -g supabase
    # or
@@ -93,23 +98,28 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
    ```
 
 2. **Login to Supabase**
+
    ```bash
    supabase login
    ```
 
 3. **Link your project**
+
    ```bash
    supabase link --project-ref YOUR_PROJECT_REF
    ```
+
    (Get `YOUR_PROJECT_REF` from your project URL, e.g., `klpjyduruuqujsaxguex`)
 
 4. **Create the function**
+
    ```bash
    mkdir -p supabase/functions/razorpay
    cp src/server/functions/razorpay.ts supabase/functions/razorpay/index.ts
    ```
 
 5. **Deploy**
+
    ```bash
    supabase functions deploy razorpay
    ```
@@ -213,11 +223,7 @@ export default defineEventHandler(async (event) => {
   // CORS
   setHeader(event, "access-control-allow-origin", "*");
   setHeader(event, "access-control-allow-methods", "POST, OPTIONS");
-  setHeader(
-    event,
-    "access-control-allow-headers",
-    "Content-Type, x-razorpay-signature",
-  );
+  setHeader(event, "access-control-allow-headers", "Content-Type, x-razorpay-signature");
 
   if (event.method === "OPTIONS") {
     return new Response(null, { status: 200 });
@@ -262,11 +268,7 @@ export default defineEventHandler(async (event) => {
 
     // 2️⃣ VERIFY PAYMENT
     case "verify": {
-      const {
-        razorpay_order_id,
-        razorpay_payment_id,
-        razorpay_signature,
-      } = body || {};
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body || {};
 
       if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
         return { ok: false, success: false, error: "Missing signature fields" };
@@ -354,20 +356,16 @@ Update `src/routes/cart.tsx` to use the correct function URL (if not using
 
 ```typescript
 // Option 1: Using supabase.functions.invoke (default)
-const { data: rzpOrder, error: rzpError } = await supabase.functions.invoke(
-  "razorpay",
-  { body: { action: "create_order", amount: result.amount * 100 } }
-);
+const { data: rzpOrder, error: rzpError } = await supabase.functions.invoke("razorpay", {
+  body: { action: "create_order", amount: result.amount * 100 },
+});
 
 // Option 2: Direct fetch (if deploying as a Remote Function)
-const response = await fetch(
-  "https://your-project.supabase.co/functions/v1/razorpay",
-  {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "create_order", amount: result.amount * 100 }),
-  }
-);
+const response = await fetch("https://your-project.supabase.co/functions/v1/razorpay", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ action: "create_order", amount: result.amount * 100 }),
+});
 ```
 
 ---
@@ -377,10 +375,12 @@ const response = await fetch(
 In the **Razorpay Dashboard → Webhooks**:
 
 1. **URL**:
+
    ```
    https://your-project.supabase.co/functions/v1/razorpay-webhook
    ```
-   *(or replace `razorpay-webhook` with the function name you chose)*
+
+   _(or replace `razorpay-webhook` with the function name you chose)_
 
 2. **Events to subscribe**:
    - ✅ `payment.success` (required)
@@ -425,14 +425,14 @@ This allows you to track which Razorpay order corresponds to which database orde
 
 ## 10. Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| `Missing RAZORPAY_KEY_ID` | Set `RAZORPAY_KEY_ID` in Supabase env vars |
-| `Missing RAZORPAY_KEY_SECRET` | Set `RAZORPAY_KEY_SECRET` in Supabase env vars |
-| `Cannot find module 'razorpay'` | The `razorpay` package must be installed in the Supabase function dependencies |
-| `Webhook signature verification failed` | Check that you used the correct Key Secret |
-| `Function not found` | Run `supabase functions deploy razorpay` |
-| `ERR_CONNECTION_REFUSED` | Check that the function is deployed and the URL is correct |
+| Issue                                   | Solution                                                                       |
+| --------------------------------------- | ------------------------------------------------------------------------------ |
+| `Missing RAZORPAY_KEY_ID`               | Set `RAZORPAY_KEY_ID` in Supabase env vars                                     |
+| `Missing RAZORPAY_KEY_SECRET`           | Set `RAZORPAY_KEY_SECRET` in Supabase env vars                                 |
+| `Cannot find module 'razorpay'`         | The `razorpay` package must be installed in the Supabase function dependencies |
+| `Webhook signature verification failed` | Check that you used the correct Key Secret                                     |
+| `Function not found`                    | Run `supabase functions deploy razorpay`                                       |
+| `ERR_CONNECTION_REFUSED`                | Check that the function is deployed and the URL is correct                     |
 
 ---
 
@@ -443,19 +443,12 @@ npm package. You would need to implement the signature verification manually:
 
 ```typescript
 // Pure Deno implementation of Razorpay signature verification
-function verifyRazorpaySignature(
-  rawBody: string,
-  signature: string,
-  keySecret: string,
-): boolean {
+function verifyRazorpaySignature(rawBody: string, signature: string, keySecret: string): boolean {
   const crypto = await import("crypto");
   const hmac = crypto.createHmac("sha256", keySecret);
   hmac.update(rawBody);
   const expected = hmac.digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(expected),
-    Buffer.from(signature),
-  );
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 }
 ```
 
@@ -467,16 +460,16 @@ But for the full Razorpay integration (creating orders, verifying signatures),
 
 ## 📋 Quick Reference
 
-| Step | Command/Action |
-|------|----------------|
-| Install CLI | `npm install -g supabase` |
-| Login | `supabase login` |
-| Link project | `supabase link --project-ref YOUR_REF` |
-| Deploy function | `supabase functions deploy razorpay` |
-| List functions | `supabase functions list` |
-| Set env vars | Dashboard → Settings → Environment Variables |
-| Webhook URL | `https://<project>.supabase.co/functions/v1/razorpay-webhook` |
+| Step            | Command/Action                                                |
+| --------------- | ------------------------------------------------------------- |
+| Install CLI     | `npm install -g supabase`                                     |
+| Login           | `supabase login`                                              |
+| Link project    | `supabase link --project-ref YOUR_REF`                        |
+| Deploy function | `supabase functions deploy razorpay`                          |
+| List functions  | `supabase functions list`                                     |
+| Set env vars    | Dashboard → Settings → Environment Variables                  |
+| Webhook URL     | `https://<project>.supabase.co/functions/v1/razorpay-webhook` |
 
 ---
 
-*This integration was added as part of the B Cube checkout flow.*
+_This integration was added as part of the B Cube checkout flow._

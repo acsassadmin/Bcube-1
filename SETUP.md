@@ -24,11 +24,11 @@ with a terminal; everything else is dashboard clicking.
 In the Supabase dashboard, open **SQL Editor → New query**, then run the files
 from `supabase/self-host/` in this order:
 
-| File | What it does |
-| --- | --- |
-| `01_schema.sql` | Creates every table, all the security rules, and both storage buckets (`site-media`, `product-uploads`). |
-| `02_seed.sql` | Adds the starting products, prices, media slots and site text. |
-| `03_make_admin.sql` | Gives your account the admin role (run it after you have signed up on the site). |
+| File                | What it does                                                                                             |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| `01_schema.sql`     | Creates every table, all the security rules, and both storage buckets (`site-media`, `product-uploads`). |
+| `02_seed.sql`       | Adds the starting products, prices, media slots and site text.                                           |
+| `03_make_admin.sql` | Gives your account the admin role (run it after you have signed up on the site).                         |
 
 Before running `02_seed.sql`, use your editor's find-and-replace to swap every
 `__MEDIA_BASE__` for your bucket's public base URL:
@@ -93,7 +93,7 @@ domain and add it to the redirect allow-list.
 ## 6. Build and deploy the site **(developer)**
 
 The site is a TanStack Start app: it needs Node.js to run (it renders pages on
-the server). GoDaddy *shared* hosting cannot run Node — use a VPS, or a Node
+the server). GoDaddy _shared_ hosting cannot run Node — use a VPS, or a Node
 host such as Railway, Render, Fly.io, Netlify or Vercel, and point your GoDaddy
 domain at it.
 
@@ -119,18 +119,18 @@ same environment variables from step 4 in the hosting dashboard.
 
 ## What lives where
 
-| Thing | Where it lives after this migration |
-| --- | --- |
-| Website code | Your GitHub repository |
-| Fonts | In the repo, at `public/fonts/` |
-| Images and videos | Supabase Storage — public bucket `site-media` |
-| Customer artwork uploads | Supabase Storage — private bucket `product-uploads` |
-| Products, prices, site text, orders, enquiries, carts | Supabase database |
-| Accounts and login | Supabase Auth |
+| Thing                                                 | Where it lives after this migration                 |
+| ----------------------------------------------------- | --------------------------------------------------- |
+| Website code                                          | Your GitHub repository                              |
+| Fonts                                                 | In the repo, at `public/fonts/`                     |
+| Images and videos                                     | Supabase Storage — public bucket `site-media`       |
+| Customer artwork uploads                              | Supabase Storage — private bucket `product-uploads` |
+| Products, prices, site text, orders, enquiries, carts | Supabase database                                   |
+| Accounts and login                                    | Supabase Auth                                       |
 
 ## Still to build (not part of this migration)
 
 - **Payments** — checkout records the order but takes no money yet.
 - **Order/enquiry emails** — nothing is emailed today; the admin dashboard is
   the only notification.
-See `HANDOFF.md` for the full technical rundown of the backend.
+  See `HANDOFF.md` for the full technical rundown of the backend.

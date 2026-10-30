@@ -52,7 +52,7 @@ RAZORPAY_KEY_SECRET="xxxxxxxxxxxxxxxxxxxxx"
 
 # Supabase
 SUPABASE_URL="https://your-project.supabase.co"
-SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+SUPABASE_SERVICE_ROLE_KEY="<your-supabase-service-role-key>"
 ```
 
 > `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are used by the **server-side
@@ -83,11 +83,11 @@ VITE_RAZORPAY_KEY_ID="rzp_test_xxxxxxxxxxxx"
 The file `src/server/functions/razorpay.ts` exports a **Nitro serverless
 function** that handles three actions:
 
-| Action       | Purpose                                                  |
-|--------------|----------------------------------------------------------|
+| Action         | Purpose                                                      |
+| -------------- | ------------------------------------------------------------ |
 | `create_order` | Creates a Razorpay order (returns order id, amount in paise) |
-| `verify`     | Verifies Razorpay payment signature (HMAC SHA256)        |
-| `webhook`    | Handles Razorpay webhook events (`payment.success`)      |
+| `verify`       | Verifies Razorpay payment signature (HMAC SHA256)            |
+| `webhook`      | Handles Razorpay webhook events (`payment.success`)          |
 
 ### Function code
 
@@ -99,13 +99,7 @@ Copy-paste this function into your Nitro project (creates
  * Razorpay Payment Functions (Nitro Serverless)
  * ... (full documentation) ...
  */
-import {
-  defineEventHandler,
-  readBody,
-  readRawBody,
-  getHeader,
-  setHeader,
-} from "h3";
+import { defineEventHandler, readBody, readRawBody, getHeader, setHeader } from "h3";
 import Razorpay from "razorpay";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
@@ -167,13 +161,14 @@ export default defineEventHandler(async (event) => {
 ### 5.2 Set environment variables in Supabase
 
 In the dashboard:
+
 - **Settings → Environment Variables**
 - Add:
   ```
   RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
   RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxx
   SUPABASE_URL=https://your-project.supabase.co
-  SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+  SUPABASE_SERVICE_ROLE_KEY=<your-supabase-service-role-key>
   ```
 
 ### 5.3 Configure the Razorpay webhook
@@ -237,6 +232,7 @@ sequenceDiagram
 ```
 
 ### Frontend call sequence (cart.tsx)
+
 1. `placeOrder()` saves the order to the `orders` table (returns `orderId`)
 2. `supabase.functions.invoke("razorpay", { action: "create_order", amount })`
    → gets the Razorpay order ID
@@ -266,14 +262,14 @@ npm run dev
 
 ## 8. Troubleshooting
 
-| Issue | Fix |
-|-------|-----|
-| `Missing RAZORPAY_KEY_ID` | Set `RAZORPAY_KEY_ID` in `.env` |
-| `Missing RAZORPAY_KEY_SECRET` | Set `RAZORPAY_KEY_SECRET` in `.env` |
-| `Failed to load payment gateway` | Check that your API key ID is a test key and the browser has internet |
-| `Payment authentication failed` | Verify the signature in the function and check the Razorpay key secret is correct |
-| `Cannot find module 'razorpay'` | Run `npm install razorpay` |
+| Issue                            | Fix                                                                               |
+| -------------------------------- | --------------------------------------------------------------------------------- |
+| `Missing RAZORPAY_KEY_ID`        | Set `RAZORPAY_KEY_ID` in `.env`                                                   |
+| `Missing RAZORPAY_KEY_SECRET`    | Set `RAZORPAY_KEY_SECRET` in `.env`                                               |
+| `Failed to load payment gateway` | Check that your API key ID is a test key and the browser has internet             |
+| `Payment authentication failed`  | Verify the signature in the function and check the Razorpay key secret is correct |
+| `Cannot find module 'razorpay'`  | Run `npm install razorpay`                                                        |
 
 ---
 
-*This integration was added as part of the B Cube checkout flow.*
+_This integration was added as part of the B Cube checkout flow._
