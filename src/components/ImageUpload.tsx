@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent } from "react";
 import { ImagePlus, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from "uuid";
 
 const BUCKET = "site-media";
 
@@ -24,13 +25,13 @@ export default function ImageUpload({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(initialUrl);
-
+  const uuid = uuidv4();
   async function upload(file: File) {
     setUploading(true);
     setError(null);
 
     try {
-      const path = `${Date.now()}-${crypto.randomUUID()}.${fileExtension(file)}`;
+      const path = `${Date.now()}-${uuid}.${fileExtension(file)}`;
 
       const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file, {
         cacheControl: "31536000",
