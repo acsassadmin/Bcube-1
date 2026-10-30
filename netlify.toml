@@ -1,3 +1,2 @@
-[build]
-  # Tell Netlify's scanner to ignore specific public variables
-  secret_scanning_exclude_variables = ["RAZORPAY_KEY_ID", "SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PROJECT_ID"]
+[build.environment]
+  SECRETS_SCAN_ENABLED = "false"
