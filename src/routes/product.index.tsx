@@ -20,12 +20,6 @@ const cat2 = { url: assetUrl("Cat2.png") };
 const cat3 = { url: assetUrl("Cat3.png") };
 const catBg1 = { url: assetUrl("Category_Bg1.png") };
 const catBg2 = { url: assetUrl("Category_Bg2b.png") };
-// const catBg1Url =
-//   "https://klpjyduruuqujsaxguex.supabase.co/storage/v1/object/public/site-media/Category%20Bg2.png";
-// const catBg1 = { url: catBg1Url };
-// const catBg2 = {
-//   url: "https://klpjyduruuqujsaxguex.supabase.co/storage/v1/object/public/site-media/Category%20Bg2.png",
-// };
 const ad1 = { url: assetUrl("Advertisment_Card.png") };
 const ad2 = { url: assetUrl("Advertisement_card_2.png") };
 const gCorporate = { url: assetUrl("Corporate_gifting.png") };
