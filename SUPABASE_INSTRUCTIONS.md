@@ -68,7 +68,7 @@ RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxx
 
 # Supabase (Settings → API)
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_SERVICE_ROLE_KEY=<your-supabase-service-role-key>
 ```
 
 > 💡 For local testing, create a `.env` file in the root of your project:
@@ -76,7 +76,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 > RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
 > RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxx
 > SUPABASE_URL=https://your-project.supabase.co
-> SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+> SUPABASE_SERVICE_ROLE_KEY=<your-supabase-service-role-key>
 > ```
 
 ---
