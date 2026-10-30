@@ -52,7 +52,7 @@ RAZORPAY_KEY_SECRET="xxxxxxxxxxxxxxxxxxxxx"
 
 # Supabase
 SUPABASE_URL="https://your-project.supabase.co"
-SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY"
 ```
 
 > `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are used by the **server-side
@@ -173,7 +173,7 @@ In the dashboard:
   RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
   RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxx
   SUPABASE_URL=https://your-project.supabase.co
-  SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+  SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
   ```
 
 ### 5.3 Configure the Razorpay webhook
