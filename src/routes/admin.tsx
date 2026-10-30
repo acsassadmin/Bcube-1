@@ -1303,8 +1303,8 @@ function OrderItemDetails({
         <dl className="mt-4 grid gap-x-6 gap-y-2 border-t border-border pt-3 text-xs sm:grid-cols-2">
           {rows.map((row) => (
             <div key={row.key} className="flex items-start justify-between gap-3">
-              <dt className="text-muted-foreground">{row.label}</dt>
-              <dd className="flex items-center gap-1.5 text-right font-medium text-brand-ink">
+              <dt className="shrink-0 text-muted-foreground">{row.label}</dt>
+              <dd className="flex min-w-0 items-center gap-1.5 break-words text-right font-medium text-brand-ink">
                 {row.color && (
                   <span
                     className="inline-block h-3 w-3 rounded-full border border-border"
@@ -1335,10 +1335,10 @@ function OrderDetailsDialog({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="max-h-[90vh] w-[calc(100%-2rem)] max-w-3xl gap-0 overflow-y-auto rounded-[25px] p-0 sm:rounded-[25px]">
+      <DialogContent className="flex max-h-[90vh] max-h-[90dvh] w-[calc(100%-2rem)] max-w-3xl flex-col gap-0 overflow-hidden rounded-[25px] p-0 sm:rounded-[25px]">
         {order && (
           <>
-            <div className="sticky top-0 z-10 border-b border-border bg-white px-5 py-4 pr-14 md:px-6">
+            <div className="shrink-0 border-b border-border bg-white px-5 py-4 pr-14 md:px-6">
               <DialogHeader>
                 <DialogTitle className="font-display text-xl text-brand-ink">
                   Order #{shortOrderId(order.id)}
@@ -1349,13 +1349,13 @@ function OrderDetailsDialog({
               </DialogHeader>
             </div>
 
-            <div className="space-y-6 px-5 py-5 md:px-6">
+            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] md:px-6">
               <section className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Customer
                   </h3>
-                  <p className="mt-2 font-display text-lg text-brand-ink">
+                  <p className="mt-2 break-words font-display text-lg text-brand-ink">
                     {order.customer_name || "Customer"}
                   </p>
                   {order.phone && (
@@ -1369,7 +1369,7 @@ function OrderDetailsDialog({
                   {order.email && (
                     <a
                       href={`mailto:${order.email}`}
-                      className="block text-sm text-brand-red hover:underline"
+                      className="block break-all text-sm text-brand-red hover:underline"
                     >
                       {order.email}
                     </a>
@@ -1380,11 +1380,11 @@ function OrderDetailsDialog({
                   <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Delivery address
                   </h3>
-                  <p className="mt-2 whitespace-pre-line text-sm text-brand-ink">
+                  <p className="mt-2 whitespace-pre-line break-words text-sm text-brand-ink">
                     {order.address || "—"}
                   </p>
                   {order.notes && (
-                    <p className="mt-2 text-xs italic text-muted-foreground">
+                    <p className="mt-2 break-words text-xs italic text-muted-foreground">
                       Notes: {order.notes}
                     </p>
                   )}
