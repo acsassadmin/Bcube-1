@@ -915,7 +915,7 @@ function EnquiryCard({
               step={1}
               value={form.quantity}
               onChange={(e) => setForm({ ...form, quantity: sanitizeQuantity(e.target.value) })}
-              placeholder={`e.g. ${MIN_BULK_QUANTITY * 10}`}
+              placeholder="e.g. 50"
               className="mt-1 w-full rounded-full border border-border bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-red"
             />
           </div>

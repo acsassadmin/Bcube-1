@@ -14,7 +14,8 @@ export const NAME_RE = /^[A-Za-z][A-Za-z\s.'-]{1,59}$/;
 
 export const NAME_MAX_LENGTH = 60;
 export const MESSAGE_MAX_LENGTH = 1000;
-export const MIN_BULK_QUANTITY = 10;
+/** Minimum quantity accepted by the bulk order form. */
+export const MIN_BULK_QUANTITY = 1;
 
 /** Uppercases the first letter of every word, leaving the rest as typed. */
 export function capitalizeName(value: string): string {

@@ -135,14 +135,10 @@ export function useCart() {
     [commit],
   );
 
-  // const setQty = useCallback(
-  //   (id: string, qty: number) => commit(read().map((i) => (i.id === id ? { ...i, qty: Math.max(1, Math.min(99, qty)) } : i))),
-  //   [commit],
-  // );
-
   const setQty = useCallback(
     (id: string, qty: number) => {
-      const nextQty = Math.max(10, qty);
+      // Allow any quantity from 1 upwards — no minimum order quantity.
+      const nextQty = Number.isFinite(qty) ? Math.max(1, Math.floor(qty)) : 1;
 
       const updatedItems = read().map((item) => {
         if (item.id !== id) return item;

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Currency, Contact } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/hooks/use-cart";
 import { MagneticButton, Magnetic } from "@/components/motion/MagneticButton";
@@ -241,9 +241,8 @@ function CartPage() {
                 const thickness = item.config?.["thickness"] as string | undefined;
                 const shape = item.config?.["shape"] as string | undefined;
 
-                const currentQty = Number(
-                  (item.config?.buyerInfo as Record<string, any>)?.["quantity"],
-                );
+                const rawQty = Number(item.qty);
+                const currentQty = Number.isFinite(rawQty) ? Math.max(1, Math.floor(rawQty)) : 1;
                 return (
                   <li
                     key={item.id}
