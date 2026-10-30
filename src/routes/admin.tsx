@@ -17,6 +17,7 @@ import {
   Trash2,
   Eye,
   Download,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ImageUpload from "@/components/ImageUpload";
@@ -25,13 +26,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { formatPrice } from "@/data/pricing";
 import { staticAbout, type AboutContent } from "@/lib/store";
 import { signProductPhoto } from "@/lib/uploads";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -1321,13 +1317,7 @@ function OrderItemDetails({
   );
 }
 
-function OrderDetailsDialog({
-  order,
-  onClose,
-}: {
-  order: AdminOrder | null;
-  onClose: () => void;
-}) {
+function OrderDetailsDialog({ order, onClose }: { order: AdminOrder | null; onClose: () => void }) {
   return (
     <Dialog
       open={!!order}
@@ -1335,84 +1325,101 @@ function OrderDetailsDialog({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="flex max-h-[90vh] max-h-[90dvh] w-[calc(100%-2rem)] max-w-3xl flex-col gap-0 overflow-hidden rounded-[25px] p-0 sm:rounded-[25px]">
-        {order && (
-          <>
-            <div className="shrink-0 border-b border-border bg-white px-5 py-4 pr-14 md:px-6">
-              <DialogHeader>
-                <DialogTitle className="font-display text-xl text-brand-ink">
-                  Order #{shortOrderId(order.id)}
-                </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground">
-                  {new Date(order.created_at).toLocaleString()} · {order.status}
-                </DialogDescription>
-              </DialogHeader>
-            </div>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay
+          data-lenis-prevent
+          data-lenis-prevent-wheel
+          data-lenis-prevent-touch
+          className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/80 [-webkit-overflow-scrolling:touch] sm:p-6"
+        >
+          <div className="flex min-h-full items-start justify-center sm:items-center">
+            <DialogPrimitive.Content className="relative w-full max-w-3xl rounded-none bg-white shadow-lg outline-none sm:rounded-[25px]">
+              {order && (
+                <>
+                  <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-border bg-white px-5 py-4 sm:static sm:rounded-t-[25px] md:px-6">
+                    <DialogHeader>
+                      <DialogTitle className="font-display text-xl text-brand-ink">
+                        Order #{shortOrderId(order.id)}
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-muted-foreground">
+                        {new Date(order.created_at).toLocaleString()} · {order.status}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogPrimitive.Close className="shrink-0 rounded-full p-1.5 text-brand-ink/60 transition hover:bg-muted hover:text-brand-ink">
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Close</span>
+                    </DialogPrimitive.Close>
+                  </div>
 
-            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] md:px-6">
-              <section className="grid gap-5 sm:grid-cols-2">
-                <div>
-                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Customer
-                  </h3>
-                  <p className="mt-2 break-words font-display text-lg text-brand-ink">
-                    {order.customer_name || "Customer"}
-                  </p>
-                  {order.phone && (
-                    <a
-                      href={`tel:${order.phone}`}
-                      className="mt-1 block text-sm text-brand-red hover:underline"
-                    >
-                      {order.phone}
-                    </a>
-                  )}
-                  {order.email && (
-                    <a
-                      href={`mailto:${order.email}`}
-                      className="block break-all text-sm text-brand-red hover:underline"
-                    >
-                      {order.email}
-                    </a>
-                  )}
-                </div>
+                  <div className="space-y-6 px-5 py-5 md:px-6">
+                    <section className="grid gap-5 sm:grid-cols-2">
+                      <div>
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Customer
+                        </h3>
+                        <p className="mt-2 break-words font-display text-lg text-brand-ink">
+                          {order.customer_name || "Customer"}
+                        </p>
+                        {order.phone && (
+                          <a
+                            href={`tel:${order.phone}`}
+                            className="mt-1 block text-sm text-brand-red hover:underline"
+                          >
+                            {order.phone}
+                          </a>
+                        )}
+                        {order.email && (
+                          <a
+                            href={`mailto:${order.email}`}
+                            className="block break-all text-sm text-brand-red hover:underline"
+                          >
+                            {order.email}
+                          </a>
+                        )}
+                      </div>
 
-                <div>
-                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Delivery address
-                  </h3>
-                  <p className="mt-2 whitespace-pre-line break-words text-sm text-brand-ink">
-                    {order.address || "—"}
-                  </p>
-                  {order.notes && (
-                    <p className="mt-2 break-words text-xs italic text-muted-foreground">
-                      Notes: {order.notes}
-                    </p>
-                  )}
-                </div>
-              </section>
+                      <div>
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Delivery address
+                        </h3>
+                        <p className="mt-2 whitespace-pre-line break-words text-sm text-brand-ink">
+                          {order.address || "—"}
+                        </p>
+                        {order.notes && (
+                          <p className="mt-2 break-words text-xs italic text-muted-foreground">
+                            Notes: {order.notes}
+                          </p>
+                        )}
+                      </div>
+                    </section>
 
-              <section>
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Items ({order.order_items.length})
-                  </h3>
-                  <p className="font-display text-lg text-brand-red">{formatPrice(order.subtotal)}</p>
-                </div>
-                <div className="space-y-4">
-                  {order.order_items.map((item, index) => (
-                    <OrderItemDetails
-                      key={`${order.id}-${index}`}
-                      item={item}
-                      order={order}
-                      index={index}
-                    />
-                  ))}
-                </div>
-              </section>
-            </div>
-          </>
-        )}
-      </DialogContent>
+                    <section>
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Items ({order.order_items.length})
+                        </h3>
+                        <p className="font-display text-lg text-brand-red">
+                          {formatPrice(order.subtotal)}
+                        </p>
+                      </div>
+                      <div className="space-y-4">
+                        {order.order_items.map((item, index) => (
+                          <OrderItemDetails
+                            key={`${order.id}-${index}`}
+                            item={item}
+                            order={order}
+                            index={index}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  </div>
+                </>
+              )}
+            </DialogPrimitive.Content>
+          </div>
+        </DialogPrimitive.Overlay>
+      </DialogPrimitive.Portal>
     </Dialog>
   );
 }
