@@ -21,13 +21,13 @@ function safeExtension(file: File) {
   if (fromName && /^[a-z0-9]{2,5}$/.test(fromName)) return fromName;
   return file.type === "image/png" ? "png" : "jpg";
 }
-const uuid = uuidv4();
+
 /** Uploads customer artwork to Supabase Storage and returns a readable URL. */
 export async function uploadProductPhoto(file: File, slug: string): Promise<UploadedPhoto> {
   const { data: auth } = await supabase.auth.getUser();
-  const owner = auth.user?.id ?? "gcrypto.randomUUID()uest";
+  const uuid = uuidv4();
+  const owner = auth.user?.id ?? "guest";
   const path = `${owner}/${slug}/${uuid}.${safeExtension(file)}`;
-  console.log("path lohg", path);
 
   const { error } = await supabase.storage
     .from(PRODUCT_UPLOADS_BUCKET)
