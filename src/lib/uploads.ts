@@ -26,6 +26,7 @@ function safeExtension(file: File) {
 export async function uploadProductPhoto(file: File, slug: string): Promise<UploadedPhoto> {
   const { data: auth } = await supabase.auth.getUser();
   const uuid = uuidv4();
+  // churn
   const owner = auth.user?.id ?? "guest";
   const path = `${owner}/${slug}/${uuid}.${safeExtension(file)}`;
 
